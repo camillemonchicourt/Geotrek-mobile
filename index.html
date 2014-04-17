@@ -23,6 +23,7 @@
     	<meta charset="utf-8" />
         <!-- WARNING: for iOS 7, remove the width=device-width and height=device-height attributes. See https://issues.apache.org/jira/browse/CB-4323 -->
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+        <link rel="stylesheet" href="css/jquery.ui.1.11.css" />
 		<link rel="stylesheet" href="css/jquery.mobile-1.1.1.min.css" />
 		<link rel="stylesheet" href="css/style.css" type="text/css">
 		<link rel="stylesheet" href="css/leaflet.css" />
@@ -82,11 +83,14 @@
     </head>
     <body id="map_page">
 		<script type="text/javascript" charset="utf-8" src="js/jquery-1.8.1.min.js"></script>
-		<script type="text/javascript" charset="utf-8" src="js/jquery.mobile-1.1.1.min.js"></script>
+        <script type="text/javascript" charset="utf-8" src="js/jquery-ui-1.10.4.custom.min.js"></script>
 		<script type="text/javascript" charset="utf-8" src="js/leaflet.js"></script>
 		<script type="text/javascript" charset="utf-8" src="js/TileLayer.MBTilesPlugin.js"></script>
 		<script type="text/javascript" charset="utf-8" src="js/map.js"></script>
-		<input	id="clickMe" type="button" value="Click Me" onclick="initMapPage();"/>	
+		<input	id="clickMe" type="button" value="Click Me" onclick="initMapPage();"/>
+        <div id="app-message"></div>
+        <div id="progression"></div>
+        <div id="progressbar"></div>
 		<div id="map"></div>
 		
 	</body>

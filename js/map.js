@@ -3,7 +3,6 @@ var onDeviceReady = function() {
 	var localFileName = 'tiles-ign.mbtiles';
     var remoteFile = 'http://cg44.makina-corpus.net/tmp/POSOW-19.04.2012.mbtiles';
 	
-    
 	resizeMap();
 
 	$(window).resize(function() {
@@ -111,7 +110,9 @@ function verifyingMap(localFileName, remoteFile){
 	var type = "db";
 
 	console.log("verifyMap");
+	$('#progressbar').progressbar({'max': 100});
 
+	$('#app-message').html('Checking local file system... ');
 	window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, function (fileSystem) {
 		console.log('file system retrieved.');
 		fs = fileSystem;
@@ -128,10 +129,12 @@ function verifyingMap(localFileName, remoteFile){
 				// file exists
 				console.log('exists, or not...');
 				console.log(fileEntry);
+				$('#app-message').html('Local mbtiles file Loaded. ');
 
 				buildMap();
 			}, function () {
 				// file does not exist
+				$('#app-message').html('Local mbtiles does not exist. Downloading... ');
 				console.log('does not exist');
 
 
@@ -140,7 +143,10 @@ function verifyingMap(localFileName, remoteFile){
 				ft.onprogress = function(progressEvent) {
 				    if (progressEvent.lengthComputable) {
 				      //loadingStatus.setPercentage(progressEvent.loaded / progressEvent.total);
-				      console.log(progressEvent.loaded / progressEvent.total);
+				      var progressionPercent = Math.round(progressEvent.loaded / progressEvent.total * 100);
+				      console.log(progressionPercent.toString() + "%");
+				      $('#progression').html(progressionPercent.toString() + "%");
+				      $('#progressbar').progressbar('value', progressionPercent);
 				    } else {
 				      //loadingStatus.increment();
 				      console.log("+1");
@@ -148,6 +154,7 @@ function verifyingMap(localFileName, remoteFile){
 				};
 				ft.download(remoteFile, absoluteLocalFileName, function (entry) {
 					console.log('download complete: ' + entry.fullPath);
+					$('#app-message').html('Local mbtiles file downloaded. ');
 					buildMap();
 
 				}, function (error) {
