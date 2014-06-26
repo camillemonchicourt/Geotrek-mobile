@@ -1,0 +1,57 @@
+<!doctype html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no, width=device-width">
+    <title></title>
+    <meta name="description" content="">
+    <!-- Place favicon.ico and apple-touch-icon.png in the root directory -->
+    <link rel="stylesheet" href="styles/vendor/normalize.css">
+    <link rel="stylesheet" href="styles/vendor/leaflet/leaflet.css">
+    <link rel="stylesheet" href="styles/vendor/loading-bar.css">
+    <link rel="stylesheet" href="styles/ionic.css">
+    <link rel="stylesheet" href="styles/geotrek-mobile.css">
+</head>
+<body>
+    <div ui-view></div>
+
+    <script src="scripts/vendor/leaflet.js"></script>
+    <script src="scripts/vendor/angular/angular.js"></script>
+    <script src="scripts/vendor/angular-ui/router/angular-ui-router.js"></script>
+    <script src="scripts/vendor/angular-resource/angular-resource.js"></script>
+    <script src="scripts/vendor/angular-sanitize/angular-sanitize.js"></script>
+    <script src="scripts/vendor/angular-animate/angular-animate.js"></script>
+    <script src="scripts/vendor/angular-leaflet-directive.js"></script>
+    <script src="scripts/vendor/angular-ui/bootstrap/buttons.js"></script>
+    <script src="scripts/vendor/ionic/ionic-angular.js"></script>
+    <script src="scripts/vendor/ionic/ionic.js"></script>
+    <script src="scripts/vendor/angular-loading-bar/loading-bar.js"></script>
+    <script src="scripts/vendor/ngCordova/ng-cordova.js"></script>
+
+    <!-- Needed for Cordova/PhoneGap (will be a 404 during development) -->
+    <script src="cordova.js"></script>
+
+    <script src="scripts/app.js"></script>
+    <script src="scripts/settings.js"></script>
+    <script src="scripts/utils.js"></script>
+    <script src="scripts/init/routes.js"></script>
+    <script src="scripts/init/checkDataService.js"></script>
+    <script src="scripts/init/syncDataService.js"></script>
+    <script src="scripts/trek/routes.js"></script>
+    <script src="scripts/trek/treksFactory.js"></script>
+    <script src="scripts/trek/treksRemoteService.js"></script>
+    <script src="scripts/trek/treksFileSystemService.js"></script>
+    <script src="scripts/trek/treksFilterFactory.js"></script>
+    <script src="scripts/trek/controllers.js"></script>
+    <script src="scripts/poi/poisFactory.js"></script>
+    <script src="scripts/poi/poisRemoteService.js"></script>
+    <script src="scripts/poi/poisFileSystemService.js"></script>
+    <script src="scripts/map/routes.js"></script>
+    <script src="scripts/map/controllers.js"></script>
+    <script src="scripts/static-pages/staticPagesFactory.js"></script>
+    <script src="scripts/social-sharing/socialSharingService.js"></script>
+    <script src="scripts/geolocation/geolocationFactory.js"></script>
+    <script src="scripts/geolocation/geolocationDeviceService.js"></script>
+    <script src="scripts/geolocation/geolocationRemoteService.js"></script>
+
+</body>
+</html>

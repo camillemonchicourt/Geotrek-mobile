@@ -1,0 +1,66 @@
+<div class="modal">
+
+    <!-- Modal header bar -->
+    <ion-header-bar class="bar-secondary">
+        <a ng-if="isIOS" class="button button-clear button-positive" ui-sref="^">Cancel</a>
+        <button ng-if="isAndroid" class="button button-back button-icon" ui-sref="^">
+            <i class="icon ion-android-arrow-back"></i>
+            {{ trek.properties.name }}
+        </button>
+        <div class="buttons pull-right">
+            <button class="button button-icon" ng-click="newTask()">
+                <i class="icon ion-android-forums"></i>
+            </button>
+            <button class="button button-icon" ng-click="share()">
+                <i class="icon ion-android-share"></i>
+            </button>
+        </div>
+    </ion-header-bar>
+
+    <!-- Modal content area -->
+    <ion-content>
+
+        <div class="trek-detail padding">
+            <h1 class="trek-detail__title">{{ trek.properties.name }}</h1>
+
+            <ion-slide-box show-pager="true" disable-scroll="false">
+                <ion-slide>
+                    <img ng-src="{{ trek.properties.pictures.0.url }}">
+                    <span class="slider-legend">Test légende</span>
+                </ion-slide>
+                <ion-slide>
+                    <img src="http://i677.photobucket.com/albums/vv137/smileytrucker/cow-toy-car-stuck-head-1259518194w.jpg">
+                    <span class="slider-legend">Test légende</span>
+                </ion-slide>
+                <ion-slide>
+                    <img src="http://farm6.staticflickr.com/5226/5663664227_ba5e573930_z.jpg">
+                    <span class="slider-legend">Test légende</span>
+                </ion-slide>
+            </ion-slide-box>
+
+            <h2 class="trek-detail__section-title">Description</h2>
+            <p class="teaser" ng-bind-html="teaser">
+                <p>{{ object.properties.ambiance }}</p>
+            </p>
+            <p ng-repeat="district in trek.properties.districts">
+                {{ district.name.join(', ') }}
+            </p>
+            <p>Communes : {{ trek.properties.cities.0.name }}</p>
+
+            <h2 class="trek-detail__section-title">En chemin</h2>
+
+            <ion-item class="poi-detail item-thumbnail-right" ng-repeat="poi in pois.features">
+                <img class="thumbnail" ng-src="{{ poi.properties.thumbnail }}"/>
+                <img class="pictogram" ng-src="{{ poi.properties.type.pictogram }}"/>
+                <h3 class="poi-detail__name">{{ poi.properties.name}}</h3>
+                <div class="poi-detail__description" ng-bind-html="poi.properties.description"></div>
+                </div>
+            </ion-item>
+
+        </div>
+
+    </ion-content>
+
+    <a ui-sref="home.map.trek({ trekId: trek.id })" class="trek-detail__back-bt button-icon icon icon ion-map"></a>
+
+</div>
