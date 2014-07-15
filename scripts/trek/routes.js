@@ -1,6 +1,6 @@
 'use strict';
 
-var geotrekTreks = angular.module('geotrekTreks', []);
+var geotrekTreks = angular.module('geotrekTreks', ['pascalprecht.translate']);
 
 geotrekTreks.config(function($stateProvider) {
 
@@ -12,7 +12,7 @@ geotrekTreks.config(function($stateProvider) {
         controller: 'TrekController',
         resolve: {
             treks: function(treksFactory) {
-                return treksFactory.getTreks();
+                return treksFactory.getGeolocalizedTreks();
             },
             staticPages: function(staticPagesFactory) {
                 return staticPagesFactory.getStaticPages();
@@ -26,6 +26,14 @@ geotrekTreks.config(function($stateProvider) {
     })
     .state('home.trek.detail', {
         url: '/:trekId',
-        controller: 'TrekDetailController'
+        controller: 'TrekDetailController',
+        resolve: {
+            trek: function(treksFactory, $stateParams) {
+                return treksFactory.getTrek($stateParams.trekId);
+            },
+            pois: function(poisFactory, $stateParams) {
+                return poisFactory.getPoisFromTrek($stateParams.trekId);
+            }
+        }
     });
 });

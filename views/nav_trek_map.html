@@ -7,10 +7,10 @@
             <div class="flex-wrapper" ng-switch-when="1">
                 <label class="item-input-wrapper">
                     <i class="icon ion-ios7-search placeholder-icon"></i>
-                    <input type="search" placeholder="Search" ng-model="activeFilters.search">
+                    <input type="search" placeholder="{{ 'nav_trek_map.search' | translate}}" ng-model="activeFilters.search">
                 </label>
                 <button class="button button-clear" ng-click="cancelBtHandler()">
-                    Cancel
+                    {{ 'nav_trek_map.cancel' | translate }}
                 </button>
             </div>
             <div class="buttons pull-right" ng-switch-default>
@@ -19,6 +19,8 @@
                 </button>
                 <img class="network-state" ng-show="$root.network_available" src="images/icon_online.png"/>
                 <img class="network-state" ng-hide="$root.network_available" src="images/icon_offline.png"/>
+                <button class="button button-icon" ng-click="chooseLanguage()">
+                    <i class="icon ion-gear-b"></i>
                 </button>
                 <button class="button button-icon" ng-click="showMore()">
                     <i class="icon ion-android-more"></i>
@@ -28,8 +30,8 @@
 
         <ion-header-bar class="bar-subheader bar-dark">
             <div class="button-bar">
-                <a class="button" ui-sref="home.trek" ui-sref-active="active">Itinéraires</a>
-                <a class="button" ui-sref="home.map" ng-class="{ active: $state.includes('home.map')}">Carte</a>
+                <a class="button" ui-sref="home.trek" ui-sref-active="active">{{ 'nav_trek_map.ways' | translate }}<span class="trek-list--number">{{ (treks.features | filter:filterTreks | filter:{properties:activeFilters.search}).length }}</span></a>
+                <a class="button" ui-sref="home.map" ng-class="{ active: $state.includes('home.map')}">{{ 'nav_trek_map.map' | translate }}</a>
             </div>
         </ion-header-bar>
 
@@ -67,12 +69,12 @@
                 <li class="filters-list__item">
                     <label class="item-input item-select">
                         <select ng-model="activeFilters.commune" ng-options="commune.name for commune in filtersData.communes">
-                            <option value="">Commune</option>
+                            <option value="">{{ 'nav_trek_map.city' | translate }}</option>
                         </select>
                     </label>
                 </li>
             </ul>
-            <button class="button button-block button-small button-dark" ng-click="resetFilters()">Réinitialiser</button>
+            <button class="button button-block button-small button-dark" ng-click="resetFilters()">{{ 'nav_trek_map.reset' | translate }}</button>
         </ion-content>
     </ion-side-menu>
 </ion-side-menus>

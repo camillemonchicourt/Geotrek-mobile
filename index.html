@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="styles/ionic.css">
     <link rel="stylesheet" href="styles/geotrek-mobile.css">
 </head>
-<body>
+<body state="{{ statename }}">
     <div ui-view></div>
 
     <script src="scripts/vendor/leaflet.js"></script>
@@ -26,6 +26,8 @@
     <script src="scripts/vendor/ionic/ionic.js"></script>
     <script src="scripts/vendor/angular-loading-bar/loading-bar.js"></script>
     <script src="scripts/vendor/ngCordova/ng-cordova.js"></script>
+    <script src="scripts/vendor/angular-translate/angular-translate.js"></script>
+    <script src="scripts/vendor/ngstorage/ngStorage.js"></script>
 
     <!-- Needed for Cordova/PhoneGap (will be a 404 during development) -->
     <script src="cordova.js"></script>
@@ -47,11 +49,18 @@
     <script src="scripts/poi/poisFileSystemService.js"></script>
     <script src="scripts/map/routes.js"></script>
     <script src="scripts/map/controllers.js"></script>
+    <script src="scripts/map/iconsService.js"></script>
+    <script src="scripts/map/leafletService.js"></script>
     <script src="scripts/static-pages/staticPagesFactory.js"></script>
     <script src="scripts/social-sharing/socialSharingService.js"></script>
     <script src="scripts/geolocation/geolocationFactory.js"></script>
     <script src="scripts/geolocation/geolocationDeviceService.js"></script>
     <script src="scripts/geolocation/geolocationRemoteService.js"></script>
+    <script src="scripts/globalization/globalization.js"></script>
+    <script src="scripts/globalization/locales.js"></script>
+    <script src="scripts/globalization/globalizationFactory.js"></script>
+    <script src="scripts/globalization/globalizationDeviceService.js"></script>
+    <script src="scripts/globalization/globalizationRemoteService.js"></script>
 
 </body>
 </html>

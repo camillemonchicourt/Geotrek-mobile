@@ -7,6 +7,9 @@
 		color: $highlight-text-color;
 		margin-bottom: 0;
 	}
+	.difficulty {
+		margin-bottom: 0;
+	}
 }
 
 .trek-list__item__detail-bt {
@@ -15,4 +18,13 @@
 	bottom: 10px;
 	color: $dark;
 	text-decoration: none;
+}
+
+.trek-list--number {
+	margin-left: 1em;
+    background: white;
+    color: purple;
+    padding: 0.15em 0.7em;
+    font-weight: bold;
+    border-radius: 45%;
 }

@@ -44,13 +44,13 @@ geotrekGeolocation.factory('geolocationFactory', ['$injector', '$window', '$q', 
         return {message: msg};
     }
 
-    geolocationFactory.getLatLonPosition = function(options) {
+    geolocationFactory.getLatLngPosition = function(options) {
 
         var deferred = $q.defer();
 
         geolocationFactory.getCurrentPosition(options)
             .then(function(position) {
-                deferred.resolve({'lat': position.coords.latitude, 'lon': position.coords.longitude});
+                deferred.resolve({'lat': position.coords.latitude, 'lng': position.coords.longitude});
             }, function(error) {
                 deferred.reject(convertError(error));
             });
