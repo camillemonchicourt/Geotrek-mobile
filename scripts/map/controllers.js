@@ -2,12 +2,12 @@
 
 var geotrekMap = angular.module('geotrekMap');
 
-geotrekMap.controller('MapController', ['$rootScope', '$state', '$scope', '$log', '$window', 'leafletData', 'filterFilter', 'settings', 'geolocationFactory', 'treksFactory', 'iconsService', 'treks', 'pois', 'utils', 'leafletService', 'leafletPathsHelpers',
-                                       function ($rootScope, $state, $scope, $log, $window, leafletData, filterFilter, settings, geolocationFactory, treksFactory, iconsService, treks, pois, utils, leafletService, leafletPathsHelpers) {
+geotrekMap.controller('MapController', ['$rootScope', '$state', '$scope', '$log', '$window', 'leafletData', 'filterFilter', 'settings', 'geolocationFactory', 'treksFactory', 'iconsService', 'treks', 'pois', 'utils', 'leafletService', 'leafletPathsHelpers', 'mapParameters', 'mapFactory',
+                                       function ($rootScope, $state, $scope, $log, $window, leafletData, filterFilter, settings, geolocationFactory, treksFactory, iconsService, treks, pois, utils, leafletService, leafletPathsHelpers, mapParameters, mapFactory) {
     $rootScope.statename = $state.current.name;
 
     // Initializing leaflet map
-    angular.extend($scope, leafletService.getMapInitParameters());
+    angular.extend($scope, mapParameters);
 
     // Adding markers linked to current trek
     var treksMarkers = leafletService.createMarkersFromTreks(treks.features, pois);
@@ -29,6 +29,18 @@ geotrekMap.controller('MapController', ['$rootScope', '$state', '$scope', '$log'
         }
         utils.createModal('views/map_trek_detail.html', modalScope);
 
+    });
+
+    leafletData.getMap().then(function(map) {
+
+        mapFactory.getDownloadedLayers()
+        .then(function(downloadedLayers) {
+
+            angular.forEach(downloadedLayers, function(layerStructure) {
+                map.addLayer(layerStructure.layer);
+                layerStructure.layer.bringToFront();
+            });
+        });
     });
 
     // Add treks geojson to the map

@@ -2,7 +2,9 @@
 
 var geotrekTreks = angular.module('geotrekTreks');
 
-geotrekTreks.controller('TrekController', function ($rootScope, $scope, $state, $window, $ionicActionSheet, $ionicModal, treksFilters, treks, staticPages, globalizationService, localeSettings, utils) {
+geotrekTreks.controller('TrekController',
+    ['$rootScope', '$scope', '$state', '$window', '$ionicActionSheet', '$ionicModal', 'treks', 'staticPages', 'localeSettings', 'utils', 'treksFiltersService',
+     function ($rootScope, $scope, $state, $window, $ionicActionSheet, $ionicModal, treks, staticPages, localeSettings, utils, treksFiltersService) {
 
     $rootScope.statename = $state.current.name;
 
@@ -11,23 +13,10 @@ geotrekTreks.controller('TrekController', function ($rootScope, $scope, $state, 
     $rootScope.staticPages = staticPages;
 
     // Define filters from service to the scope for the view
-    $scope.filtersData = {
-        difficulties : treksFilters.difficulties,
-        durations    : treksFilters.durations,
-        elevations   : treksFilters.elevations,
-        themes       : treksFilters.themes,
-        communes     : treksFilters.communes
-    };
+    $scope.filtersData = treksFiltersService.getTrekFilterOptions(treks);
 
     // Prepare an empty object to store currently selected filters
-    $scope.activeFilters = {
-        difficulty: undefined,
-        duration:   undefined,
-        elevation:  undefined,
-        theme:      undefined,
-        commune:    null,
-        search:     ''
-    };
+    $scope.activeFilters = treksFiltersService.getDefaultActiveFilterValues();
 
     // Give access to state data to our View for active state
     $scope.$state = $state;
@@ -39,22 +28,11 @@ geotrekTreks.controller('TrekController', function ($rootScope, $scope, $state, 
 
     // Filter treks everytime our filters change
     $scope.filterTreks = function (trek) {
-        return (filterTrekWithFilter(trek.properties.difficulty.id, $scope.activeFilters.difficulty) &&
-            filterTrekWithFilter(trek.properties.duration, $scope.activeFilters.duration) &&
-            filterTrekWithFilter(trek.properties.ascent, $scope.activeFilters.elevation) &&
-            filterTrekWithThemes(trek.properties.themes, $scope.activeFilters.theme) &&
-            filterTrekWithCities(trek.properties.cities, $scope.activeFilters.commune));
+        return treksFiltersService.filterTreks(trek, $scope.activeFilters);
     };
 
     $scope.resetFilters = function () {
-        $scope.activeFilters = {
-            difficulty: undefined,
-            duration:   undefined,
-            elevation:  undefined,
-            theme:      undefined,
-            commune:    null,
-            search:     ''
-        };
+        $scope.activeFilters = treksFiltersService.getDefaultActiveFilterValues();
     };
 
     $scope.cancelBtHandler = function () {
@@ -78,100 +56,96 @@ geotrekTreks.controller('TrekController', function ($rootScope, $scope, $state, 
         });
     };
 
-    // Triggered on a button click, or some other target
-    $scope.chooseLanguage = function () {
-        // Show the action sheet
-        var languages = localeSettings;
-
-        $ionicActionSheet.show({
-            buttons: languages,
-            cancel: function() {
-
-            },
-            buttonClicked: function(index) {
-                var chosenLocale = languages[index].locale;
-                globalizationService.setLanguage(chosenLocale);
-                return true;
-            }
-        });
-    };
-
-    function isValidFilter(value, filter) {
-        var valid = true;
-        if (angular.isUndefined(value)
-            || angular.isUndefined(filter)
-            || (filter === null)
-            || (value === null))
-            {
-                valid = false;
-            }
-        return valid;
-    };
-
-    function filterTrekWithFilter(trekValue, filter) {
-
-        // Trek considered as matching if filter not set or if
-        // property is empty.
-        if (!(isValidFilter(trekValue, filter))) {
-            return true;
-        }
-
-        return (trekValue <= filter);
-    }
-
-    function filterTrekWithThemes(themesValues, value) {
-        var isMatching = false;
-        // Trek considered as matching if filter not set or if
-        // property is empty.
-        if (!(isValidFilter(themesValues, value))) {
-            return true;
-        }
-
-        angular.forEach(themesValues, function(themeValue) {
-            if (themeValue.id === undefined) {
-                isMatching = true;
-            }
-
-            if (themeValue.id === value) {
-                isMatching = true;
-            }
-        });
-
-        return isMatching;
-    }
-
-    function filterTrekWithCities(citiesValues, value) {
-        var isMatching = false;
-        // Trek considered as matching if filter not set or if
-        // property is empty.
-        if (!(isValidFilter(citiesValues, value))) {
-            return true;
-        }
-
-        angular.forEach(citiesValues, function(cityValue) {
-            if (cityValue.code === undefined) {
-                isMatching = true;
-            }
-
-            if (cityValue.code === value.value) {
-                isMatching = true;
-            }
-        });
-
-        return isMatching;
-    }
-
     // Watch for changes on filters, then reload the treks to keep them synced
     $scope.$watchCollection('activeFilters', function() {
         $scope.$broadcast('OnFilter');
     });
-})
-.controller('TrekListController', ['$rootScope', '$state', '$scope', function ($rootScope, $state, $scope) {
+}])
+.controller('TrekListController',
+    ['$rootScope', '$state', '$scope', '$ionicPopup', '$q', 'mapFactory', 'treks', 'userSettingsService',
+    function ($rootScope, $state, $scope, $ionicPopup, $q, mapFactory, treks, userSettingsService) {
 
     $rootScope.statename = $state.current.name;
     // Ordering by distance
     // If distance is not available, default ordering is trek.geojson one
     $scope.orderProp = 'distanceFromUser';
+
+    var getTrekById = function(treks, trekId) {
+        var currentTrek;
+        angular.forEach(treks, function(trek) {
+            if (trek.id == trekId) {
+                currentTrek = trek;
+                return;
+            }
+        });
+
+        return currentTrek;
+    };
+
+    $scope.downloadTile = function(trekId) {
+
+        // We prevent tile download if network is not available
+        if (!$rootScope.network_available) {
+            $ionicPopup.alert({
+                title: 'Network cannot be reached',
+                template: 'Check your network connection, needed to download trek precise maps'
+            });
+        }
+        else {
+
+            // Getting user connection settings, to know if we are in WiFi only mode
+            var template = 'You will download precise map for this trek. Are you sure ?';
+            if (userSettingsService.warnForDownload()) {
+                template += '<br/><strong>Warning</strong>: you are not WiFi connected, be aware that some mobile data will be spent.';
+            }
+
+            var confirmPopup = $ionicPopup.confirm({
+                title: 'Download trek map',
+                template: template
+            });
+
+            var currentTrek = getTrekById(treks.features, trekId);
+            currentTrek.mbtiles.realProgress = 0;
+            currentTrek.mbtiles.inDownloadProgress = false;
+
+            confirmPopup.then(function(confirmed) {
+                if(confirmed) {
+                    currentTrek.mbtiles.inDownloadProgress = true;
+                    $q.when(mapFactory.downloadTrekPreciseBackground(trekId))
+                    .then(function(result) {
+                        currentTrek.mbtiles.inDownloadProgress = false;
+                        currentTrek.mbtiles.isDownloaded = true;
+                    }, function(error) {
+                        currentTrek.mbtiles.inDownloadProgress = false;
+                    }, function(progress) {
+                        currentTrek.mbtiles.inDownloadProgress = true;
+                        currentTrek.mbtiles.realProgress = Math.floor(progress.loaded / progress.total * 100);
+                    });
+                }
+            });
+        }
+    };
+
+    $scope.removeTile = function(trekId) {
+
+        var confirmPopup = $ionicPopup.confirm({
+            title: 'Remove trek map',
+            template: 'Are you sure to remove trek precise map ?'
+        });
+
+        var currentTrek = getTrekById(treks.features, trekId);
+
+        confirmPopup.then(function(confirmed) {
+            if(confirmed) {
+                $q.when(mapFactory.removeTrekPreciseBackground(trekId))
+                .then(function(result) {
+                    currentTrek.mbtiles.isDownloaded = false;
+                }, function(error) {
+                    $log.error(error);
+                });
+            }
+        });
+    };
 }])
 .controller('TrekDetailController',
     ['$rootScope', '$state', '$scope', '$ionicModal', '$stateParams', '$sce', 'trek', 'pois', 'socialSharingService',

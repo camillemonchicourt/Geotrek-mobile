@@ -2,7 +2,7 @@
 
 var geotrekInit = angular.module('geotrekInit');
 
-geotrekInit.service('checkDataService', ['$q', '$log', 'treksFactory', 'staticPagesFactory', function($q, $log, treksFactory, staticPagesFactory) {
+geotrekInit.service('checkDataService', ['$q', '$log', 'treksFactory', 'staticPagesFactory', 'mapFactory', function($q, $log, treksFactory, staticPagesFactory, mapFactory) {
 
     this.isReady = function() {
 

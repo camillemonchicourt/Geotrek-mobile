@@ -19,9 +19,7 @@
                 </button>
                 <img class="network-state" ng-show="$root.network_available" src="images/icon_online.png"/>
                 <img class="network-state" ng-hide="$root.network_available" src="images/icon_offline.png"/>
-                <button class="button button-icon" ng-click="chooseLanguage()">
-                    <i class="icon ion-gear-b"></i>
-                </button>
+                <a class="button button-icon" ui-sref="settings"><i class="icon ion-gear-b"></i></a>
                 <button class="button button-icon" ng-click="showMore()">
                     <i class="icon ion-android-more"></i>
                 </button>
@@ -60,15 +58,41 @@
                     </button>
                 </li>
 
-                <li class="filters-list__item">
-                    <button class="filters-list__bt button button-icon icon-top {{ themes.icon }}" ng-repeat="themes in filtersData.themes" ng-model="activeFilters.theme" btn-radio="{{ themes.value }}" style="background-image: url(images/{{ themes.icon }});" uncheckable>
-                        <span>{{ themes.name }}</span>
-                    </button>
+                <li class="filters-list__item filters-list__item--select">
+                    <label class="item-input item-select">
+                        <select ng-model="activeFilters.theme" ng-options="theme.name for theme in filtersData.themes">
+                            <option value="">{{ 'nav_trek_map.theme' | translate }}</option>
+                        </select>
+                    </label>
                 </li>
 
-                <li class="filters-list__item">
+                <li class="filters-list__item filters-list__item--select">
                     <label class="item-input item-select">
-                        <select ng-model="activeFilters.commune" ng-options="commune.name for commune in filtersData.communes">
+                        <select ng-model="activeFilters.use" ng-options="use.name for use in filtersData.uses">
+                            <option value="">{{ 'nav_trek_map.use' | translate }}</option>
+                        </select>
+                    </label>
+                </li>
+
+                <li class="filters-list__item filters-list__item--select">
+                    <label class="item-input item-select">
+                        <select ng-model="activeFilters.route" ng-options="route.name for route in filtersData.routes">
+                            <option value="">{{ 'nav_trek_map.route' | translate }}</option>
+                        </select>
+                    </label>
+                </li>
+
+                <li class="filters-list__item filters-list__item--select">
+                    <label class="item-input item-select">
+                        <select ng-model="activeFilters.valley" ng-options="valley.name for valley in filtersData.valleys">
+                            <option value="">{{ 'nav_trek_map.valley' | translate }}</option>
+                        </select>
+                    </label>
+                </li>                
+
+                <li class="filters-list__item filters-list__item--select">
+                    <label class="item-input item-select">
+                        <select ng-model="activeFilters.municipality" ng-options="municipality.name for municipality in filtersData.municipalities">
                             <option value="">{{ 'nav_trek_map.city' | translate }}</option>
                         </select>
                     </label>
