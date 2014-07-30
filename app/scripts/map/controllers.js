@@ -53,6 +53,8 @@ geotrekMap.controller('MapController', ['$rootScope', '$state', '$scope', '$log'
                     if ((updateBounds == undefined) || (updateBounds == true)){
                         // With this call, map will always cover all geojson data area
                         map.fitBounds(feature.getBounds());
+                        feature.setText('>     ', {repeat:true});
+                        feature.bringToBack();
                     }
                 }
             }
