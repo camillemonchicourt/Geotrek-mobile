@@ -16,14 +16,10 @@ geotrekTreks.config(function($stateProvider) {
             },
             staticPages: function(staticPagesFactory) {
                 return staticPagesFactory.getStaticPages();
-            }
-        }
-    })
-    .state('home.trek', {
-        url: '/trek',
-        templateUrl : 'views/trek_list.html',
-        controller: 'TrekListController',
-        resolve: {
+            },
+            // Resolve only to add "isDownloaded" property on each available trek
+            // "isDownloaded = true" means that user has manually downloaded
+            // precise map for this trek
             downloadedTreks: function($q, treks, mapFactory) {
                 var promises = [],
                     treksList = treks.features;
@@ -31,7 +27,7 @@ geotrekTreks.config(function($stateProvider) {
                     promises.push(mapFactory.hasTrekPreciseBackground(trek.id));
                 });
 
-                $q.all(promises)
+                return $q.all(promises)
                 .then(function(isDownloadedList) {
                     for(var i=0; i<isDownloadedList.length; i++) {
                         treksList[i]['mbtiles'] = {
@@ -42,12 +38,17 @@ geotrekTreks.config(function($stateProvider) {
             }
         }
     })
+    .state('home.trek', {
+        url: '/trek',
+        templateUrl : 'views/trek_list.html',
+        controller: 'TrekListController'
+    })
     .state('home.trek.detail', {
         url: '/:trekId',
         controller: 'TrekDetailController',
         resolve: {
             trek: function(treksFactory, $stateParams) {
-                return treksFactory.getTrek($stateParams.trekId);
+                return treksFactory.getGeolocalizedTrek($stateParams.trekId);
             },
             pois: function(poisFactory, $stateParams) {
                 return poisFactory.getGeolocalizedPOIsFromTrek($stateParams.trekId);

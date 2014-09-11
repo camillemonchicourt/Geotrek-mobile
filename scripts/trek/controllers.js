@@ -3,10 +3,8 @@
 var geotrekTreks = angular.module('geotrekTreks');
 
 geotrekTreks.controller('TrekController',
-    ['$rootScope', '$scope', '$state', '$window', '$ionicActionSheet', '$ionicModal', 'treks', 'staticPages', 'localeSettings', 'utils', 'treksFiltersService',
-     function ($rootScope, $scope, $state, $window, $ionicActionSheet, $ionicModal, treks, staticPages, localeSettings, utils, treksFiltersService) {
-
-    $rootScope.statename = $state.current.name;
+    ['$rootScope', '$scope', '$state', '$window', '$ionicActionSheet', '$ionicModal', '$log', 'treks', 'staticPages', 'localeSettings', 'utils', 'treksFiltersService',
+     function ($rootScope, $scope, $state, $window, $ionicActionSheet, $ionicModal, $log, treks, staticPages, localeSettings, utils, treksFiltersService) {
 
     // treks and staticPages come from TrekController routing resolve
     $rootScope.treks = treks;
@@ -33,6 +31,10 @@ geotrekTreks.controller('TrekController',
 
     $scope.resetFilters = function () {
         $scope.activeFilters = treksFiltersService.getDefaultActiveFilterValues();
+    };
+
+    $scope.clearSearch = function () {
+        $scope.activeFilters.search = '';
     };
 
     $scope.cancelBtHandler = function () {
@@ -65,7 +67,6 @@ geotrekTreks.controller('TrekController',
     ['$rootScope', '$state', '$scope', '$ionicPopup', '$q', 'mapFactory', 'treks', 'userSettingsService',
     function ($rootScope, $state, $scope, $ionicPopup, $q, mapFactory, treks, userSettingsService) {
 
-    $rootScope.statename = $state.current.name;
     // Ordering by distance
     // If distance is not available, default ordering is trek.geojson one
     $scope.orderProp = 'distanceFromUser';
@@ -150,8 +151,6 @@ geotrekTreks.controller('TrekController',
 .controller('TrekDetailController',
     ['$rootScope', '$state', '$scope', '$ionicModal', '$stateParams', '$sce', 'trek', 'pois', 'socialSharingService',
     function ($rootScope, $state, $scope, $ionicModal, $stateParams, $sce, trek, pois, socialSharingService) {
-
-    $rootScope.statename = $state.current.name;
 
     $scope.trekId = $stateParams.trekId;
     $scope.trek = trek;

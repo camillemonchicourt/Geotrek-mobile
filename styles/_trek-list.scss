@@ -3,8 +3,11 @@
 }
 
 .trek-list__item {
+    h3 {
+        color: $highlight-text-color;
+    }
+
 	.departure {
-		color: $highlight-text-color;
 		margin-bottom: 0;
 	}
 	.difficulty {
@@ -24,7 +27,7 @@
 }
 
 .trek-list--number {
-	margin-left: 1em;
+	margin-right: 0.4em;
     background: white;
     color: purple;
     padding: 0.15em 0.7em;

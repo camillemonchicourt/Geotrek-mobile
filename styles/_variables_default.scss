@@ -5,9 +5,11 @@
 $primaryColor:			$green;
 $secondaryColor:		$greenDarker;
 $complementaryColor:    white;
+$complementaryColor2:   grey;
 
 $tabs-color:			$dark;
-$tabs-border-color:		$primaryColor;
+$tabs-border-color:		$complementaryColor;
+$tabs-border-active-color: $primaryColor;
 
 $icon-bt-color:			$dark;
 $highlight-text-color:  $green;

@@ -3,15 +3,14 @@
 var geotrekUserSettings = angular.module('geotrekUserSettings');
 
 geotrekUserSettings.controller('UserSettingsController',
-    ['$rootScope', '$state', '$scope', '$ionicModal', 'localeSettings', 'userSettingsService', 'networkSettings', 'globalizationService',
-    function ($rootScope, $state, $scope, $ionicModal, localeSettings, userSettingsService, networkSettings, globalizationService) {
-
-    $rootScope.statename = $state.current.name;
+    ['$rootScope', '$state', '$scope', '$ionicModal', 'localeSettings', 'userSettingsService', 'networkSettings', 'globalizationService', 'mapFactory',
+    function ($rootScope, $state, $scope, $ionicModal, localeSettings, userSettingsService, networkSettings, globalizationService, mapFactory) {
 
     // To have a correct 2-ways binding, localeSettings and networkSettings are used for
     // 1/ select markup initialization
     $scope.languages = localeSettings;
     $scope.connections = networkSettings;
+    $scope.cleanIsDisabled = false;
 
     // AND
     // 2/ initialize select with saved user settings
@@ -43,6 +42,16 @@ geotrekUserSettings.controller('UserSettingsController',
     $scope.$watch('userSettings', function() {
         userSettingsService.saveUserSettings($scope.userSettings);
     }, true);
+
+    $scope.cleanMaps = function() {
+        mapFactory.cleanDownloadedLayers()
+        .then(function(result) {
+            // Disabling delete button to inform user that delete is done
+            $scope.cleanIsDisabled = true;
+        }, function(error) {
+            $log.error(error);
+        });
+    };
 
     //Cleanup the modal when we're done with it!
     $scope.$on('$destroy', function() {

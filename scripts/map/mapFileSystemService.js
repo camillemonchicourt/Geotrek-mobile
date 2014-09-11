@@ -39,7 +39,6 @@ geotrekMap.service('mapFileSystemService',
 
     this.getTileLayer = function(mbtileFilename) {
 
-        console.log(mbtileFilename);
         var deferred = $q.defer(),
             mbtileFilenameWoExtension = mbtileFilename.substr(0, mbtileFilename.lastIndexOf('.'));
 
@@ -73,6 +72,34 @@ geotrekMap.service('mapFileSystemService',
             angular.forEach(listFiles, function(mbtileFile) {
                 if (mbtileFile.name != settings.TILES_FILE_NAME) {
                     promises.push(_this.getTileLayer(mbtileFile.name));
+                }
+            });
+
+            $q.all(promises)
+            .then(function(layers) {
+                deferred.resolve(layers);
+            })
+
+        }, function(error) {
+            $log.error(error);
+            deferred.resolve([]);
+        });
+
+        return deferred.promise;
+    };
+
+    this.cleanDownloadedLayers = function() {
+        var deferred = $q.defer(),
+            promise = [],
+            _this = this;
+
+        $cordovaFile.listDir(settings.device.RELATIVE_TILES_ROOT)
+        .then(function(listFiles) {
+            var promises = [];
+
+            angular.forEach(listFiles, function(mbtileFile) {
+                if (mbtileFile.name != settings.TILES_FILE_NAME) {
+                    promises.push($cordovaFile.removeFile(settings.device.RELATIVE_TILES_ROOT + "/" + mbtileFile.name));
                 }
             });
 

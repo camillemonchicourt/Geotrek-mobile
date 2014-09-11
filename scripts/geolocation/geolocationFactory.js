@@ -2,10 +2,13 @@
 
 var geotrekGeolocation = angular.module('geotrekGeolocation', []);
 
-geotrekGeolocation.factory('geolocationFactory', ['$injector', '$window', '$q', function ($injector, $window, $q) {
+geotrekGeolocation.factory('geolocationFactory', ['$injector', '$window', '$q', '$rootScope', '$log', function ($injector, $window, $q, $rootScope, $log) {
 
     var geolocationFactory;
 
+    // On Android, HTML5 geolocation is better than native one, support for android
+    // has been dropped (https://issues.apache.org/jira/browse/CB-5977)
+    // That's why we test if platform is Android
     if (angular.isDefined($window.cordova) && (!$window.ionic.Platform.isAndroid())) {
         geolocationFactory = $injector.get('geolocationDeviceService');
     }
@@ -44,14 +47,27 @@ geotrekGeolocation.factory('geolocationFactory', ['$injector', '$window', '$q', 
         return {message: msg};
     }
 
-    geolocationFactory.getLatLngPosition = function(options) {
+    geolocationFactory.getLatLngPosition = function(options, watchCallback) {
 
         var deferred = $q.defer();
 
+        // Cleaning watch to resolve weird no-callback issue
+        // See MapController for more precisions
+        if (!!$rootScope.watchID) {
+            $log.info('There is a watch, cleaning it before getting user LatLng position');
+            geolocationFactory.clearWatch($rootScope.watchID);
+        }
+
         geolocationFactory.getCurrentPosition(options)
             .then(function(position) {
+                if (watchCallback) {
+                    watchCallback();
+                }
                 deferred.resolve({'lat': position.coords.latitude, 'lng': position.coords.longitude});
             }, function(error) {
+                if (watchCallback) {
+                    watchCallback();
+                }
                 deferred.reject(convertError(error));
             });
 

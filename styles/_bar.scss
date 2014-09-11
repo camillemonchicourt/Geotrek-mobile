@@ -1,6 +1,6 @@
 .bar-main {
   .flex-wrapper {
-    margin-left: 40px;
+    margin: 0 5px;
   }
 
   .item-input-inset {
@@ -24,16 +24,27 @@
       background: $tabs-color;
     }
 
+    box-shadow: inset 0 -4px 0 $tabs-border-color;
+    color: white;
+
     &.active,
     &.activated {
-      box-shadow: inset 0 -4px 0 $tabs-border-color;
-      color: white;
+      box-shadow: inset 0 -4px 0 $tabs-border-active-color;
+      font-weight: bold;
     }
 
     &:after {
       display: none;
     }
   }
+}
+
+.bar-subheader .button-bar {
+   
+  .button + .button {
+    border-left: 4px solid $tabs-border-active-color;
+  }
+
 }
 
 .bar-subheader .button-bar > .button {
@@ -52,11 +63,25 @@
   .button-back {
     white-space: nowrap;
     overflow: hidden;
-    color: $highlight-text-color;
+    color: $complementaryColor2;
     padding-right: 91px;
   }
 
+  .modal__actions i {
+      color: $primaryColor;
+  }
+
   i {
-    color: $icon-bt-color;
+    color: $complementaryColor2;
+  }
+}
+
+.search-area {
+  position: relative;
+
+  .ion-close {
+    position: absolute;
+    top: 6px;
+    right: 10px;
   }
 }

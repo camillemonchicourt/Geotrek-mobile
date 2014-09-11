@@ -28,3 +28,68 @@
 	margin-left: -10px;
 	min-width: 130px;
 }
+
+.trek-detail__main-infos {
+	background-color: $primaryColor;
+	padding: 5px;
+	margin: 0 -10px;
+}
+
+.trek-detail__main-infos__item {
+	padding: 10px 5px 10px 40px;
+	display: inline-block;
+	width: 130px;
+	position: relative;
+	color: white;
+}
+
+.trek-detail__main-infos__item:before {
+	width: 30px;
+	position: absolute;
+	top: 5px;
+	left: 5px;	
+}
+
+.trek-detail__main-infos__item.icon {
+	color: white;
+}
+
+.icon-duration:before {
+	content: url('../images/duration-1.svg');
+}
+
+.icon-difficulty:before {
+	content: url('../images/difficulty-2.svg');
+}
+
+.icon-ascent:before {
+	content: url('../images/deniv1.svg');
+	top: -1px;
+}
+
+.icon-total-length:before {
+	content: url('../images/difficulty-2.svg');
+}
+
+.icon-route:before {
+	content: url('../images/difficulty-2.svg');
+}
+
+.trek-detail__main-infos__item.icon.ion-android-locate:before {
+	font-size: 20px;
+	color: white;
+	top: 11px;
+	left: 11px;
+}
+
+.trek-detail__usage-infos {
+}
+
+.trek-detail__usage-infos__item {
+	display: inline-block;
+	position: relative;
+}
+
+.trek-detail__usage-infos__item.icon {
+	height: 30px;
+}

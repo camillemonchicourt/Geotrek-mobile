@@ -3,7 +3,7 @@
     <!-- Modal header bar -->
     <ion-header-bar class="bar-secondary">
         <div class="object-title">
-            <img ng-if="objectToDisplay.pictogram" class="pictogram" ng-src="{{ objectToDisplay.pictogram }}"/>
+            <img ng-if="objectToDisplay.pictogram" class="pictogram pictogram-title" ng-src="{{ objectToDisplay.pictogram }}"/>
             <h3 class="poi-detail__name">{{ objectToDisplay.name}}</h3>
         </div>
         <a ng-if="$root.isIOS" class="button button-clear button-positive pull-right" ng-click="modal.remove()">{{ 'static_page.cancel' | translate }}</a>
@@ -17,11 +17,32 @@
     <ion-content>
 
         <div class='page-content'>
-            <ion-item class="poi-detail item-thumbnail-right">
-                <img ng-if="objectToDisplay.thumbnail" class="thumbnail" ng-src="{{ objectToDisplay.thumbnail }}"/>
-                <div class="poi-detail__description" ng-bind-html="objectToDisplay.description"></div>
-                </div>
-            </ion-item>
+
+            <div class="trek-detail padding">
+
+                <ul ng-if="objectToDisplay.duration_pretty" class="trek-detail__main-infos">
+                    <li class="trek-detail__main-infos__item icon-duration">{{ objectToDisplay.duration_pretty }}</li>
+                    <li class="trek-detail__main-infos__item icon-difficulty">{{ objectToDisplay.difficulty.label }}</li>
+                    <li class="trek-detail__main-infos__item icon-ascent">{{ objectToDisplay.ascent }}m</li>
+                    <li class="trek-detail__main-infos__item icon-total-length">{{ objectToDisplay.length/1000 | number:2 }}km</li>
+
+                </ul>
+
+                <ul ng-if="objectToDisplay.usages" class="trek-detail__usage-infos">
+                    <li class="trek-detail__usage-infos__item">{{ 'map_trek_detail.usages' | translate }}</li>
+                    <li class="trek-detail__usage-infos__item" ng-repeat="usage in objectToDisplay.usages">
+                        <img class="trek-detail__usage-infos__item icon" ng-src="{{ usage.pictogram }}"/>
+                    </li>
+                <ul>
+
+                <ion-item ng-if="objectToDisplay.thumbnail" class="poi-detail item-thumbnail-right">
+                    <img class="thumbnail" ng-src="{{ objectToDisplay.thumbnail }}"/>
+                    <div class="poi-detail__description" ng-bind-html="objectToDisplay.description"></div>
+                    </div>
+                </ion-item>
+
+                <a ng-if="objectToDisplay.id" ui-sref="home.trek.detail({ trekId: objectToDisplay.id })" class="trek-detail__back-bt button-icon icon icon-text icon-geotrek icon-binoculars">{{ 'map_trek_detail.more_details' | translate }}</a>
+            </div>
         </div>
 
     </ion-content>
