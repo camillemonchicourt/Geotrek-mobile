@@ -20,13 +20,13 @@
             </div>
 
             <div ng-switch-default class="row">
-                <h1 class="app-title col">Rando Ecrins</h1>
+                <h1 class="app-title col col-75">Rando Ecrins</h1>
                 <div class="buttons col col-25">
                     <div class="buttons pull-right">
                         <button class="button button-icon" ng-click="showSearch.search=1">
                             <i class="icon ion-search"></i>
                         </button>
-                        <a class="button button-icon" ui-sref="settings"><i class="icon ion-gear-b"></i></a>
+                        <button class="button button-icon" ui-sref="settings"><i class="icon ion-gear-b"></i></button>
                         <button class="button button-icon" ng-click="showMore()">
                             <i class="icon ion-android-more"></i>
                         </button>
@@ -50,29 +50,29 @@
 
     <!-- Left menu -->
     <ion-side-menu side="left" width="245">
-        <ion-content scroll="false">
+        <ion-content scroll="true" scrollbar-x="false" scrollbar-y="false">
             <ul class="filters-list">
                 <li class="filters-list__item">
-                    <button class="filters-list__bt button button-icon icon-top" ng-repeat="difficulty in filtersData.difficulties" ng-model="activeFilters.difficulty" btn-radio="{{ difficulty.value }}" style="background-image: url(images/{{ difficulty.icon }});" uncheckable>
+                    <button class="filters-list__bt button button-icon icon-top" ng-repeat="difficulty in filtersData.difficulties" ng-model="activeFilters.difficulty[difficulty.value]" btn-checkbox style="background-image: url({{ difficulty.icon }});background-size: contain;" uncheckable>
                         <span>{{ difficulty.name }}</span>
                     </button>
                 </li>
 
                 <li class="filters-list__item">
-                    <button class="filters-list__bt button button-icon icon-top {{ duration.icon }}" ng-repeat="duration in filtersData.durations" ng-model="activeFilters.duration" btn-radio="{{ duration.value }}" style="background-image: url(images/{{ duration.icon }});" uncheckable>
+                    <button class="filters-list__bt button button-icon icon-top {{ duration.icon }}" ng-init="activeFilters.duration[duration.id] = duration" ng-repeat="duration in filtersData.durations" ng-model="activeFilters.duration[duration.id].checked" btn-checkbox style="background-image: url(images/duration-{{ $index+1 }}.svg);" uncheckable>
                         <span>{{ duration.name }}</span>
                     </button>
                 </li>
 
                 <li class="filters-list__item">
-                    <button class="filters-list__bt button button-icon icon-top {{ elevation.icon }}" ng-repeat="elevation in filtersData.elevations" ng-model="activeFilters.elevation" btn-radio="{{ elevation.value }}" style="background-image: url(images/{{ elevation.icon }});" uncheckable>
-                        <span>{{ elevation.name }}</span>
+                    <button class="filters-list__bt-no-icon button" ng-init="activeFilters.elevation[elevation.id] = elevation" ng-repeat="elevation in filtersData.elevations" btn-checkbox ng-model="activeFilters.elevation[elevation.id].checked" uncheckable>
+                        {{ elevation.name }}
                     </button>
                 </li>
 
                 <li class="filters-list__item">
                     <button class="filters-list__bt button button-icon icon-top {{ download.icon }}" ng-repeat="download in filtersData.downloads" ng-model="activeFilters.download" btn-radio="{{ download.value }}" style="background-image: url(images/{{ download.icon }});" uncheckable>
-                        <span>{{ download.name }}</span>
+                        <span>{{ download.name | translate }}</span>
                     </button>
                 </li>
 
@@ -116,7 +116,7 @@
                     </label>
                 </li>
             </ul>
-            <button class="button button-block button-small button-dark" ng-click="resetFilters()">{{ 'nav_trek_map.reset' | translate }}</button>
+            <button class="button button-block button-small button-dark icon-right ion-close-round" ng-click="resetFilters()">{{ 'nav_trek_map.reset' | translate }}</button>
         </ion-content>
     </ion-side-menu>
 </ion-side-menus>

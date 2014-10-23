@@ -1,4 +1,3 @@
-@charset "UTF-8";
 .flex-wrapper {
   display: -webkit-box;
   display: -webkit-flex;
@@ -13,11 +12,42 @@
   -ms-flex: 1 0;
   flex: 1 0; }
 
+.leaflet-container {
+  width: 100%;
+  height: 100%; }
+
+.main-container {
+  overflow: hidden; }
+
+.menu-left {
+  background: #981d97; }
+  .menu-left .scroll-content {
+    padding: 0 10px; }
+  .menu-left .button-block {
+    border-radius: 5px;
+    font-size: 14px; }
+
+h1.app-title {
+  font-size: 140%;
+  margin: 0 0.5em; }
+
+.list .item-toggle {
+  padding: 8px; }
+
+.item p {
+  color: #4d4a4a; }
+
 .icon-geotrek {
   vertical-align: middle;
   text-decoration: none; }
-  .icon-geotrek.icon-binoculars:before {
-    content: "b"; }
+  .icon-geotrek.icon-binoculars::before {
+    content: url(../images/binocular.svg);
+    width: 32px;
+    height: 32px; }
+  .icon-geotrek.icon-binoculars-2::before {
+    content: url(../images/binocular-2.svg);
+    width: 32px;
+    height: 32px; }
 
 .icon-text {
   line-height: 32px;
@@ -38,6 +68,10 @@
   position: absolute;
   right: 5px;
   bottom: 10px; }
+  .trek-list__item__detail__actions a {
+    display: block;
+    height: 40px;
+    width: 50px; }
 
 .trek-list__item__detail-bt {
   color: #494645;
@@ -101,6 +135,24 @@
     background-position: center bottom;
     background-repeat: no-repeat; }
 
+.filters-list__bt-no-icon {
+  position: relative;
+  color: white;
+  padding: 0 1px;
+  font-size: 12px;
+  min-width: 53px;
+  margin: 0 1px;
+  border-color: white;
+  background: transparent; }
+  .filters-list__bt-no-icon:before {
+    font-size: 40px; }
+  .filters-list__bt-no-icon:hover {
+    color: white; }
+  .filters-list__bt-no-icon.activated, .filters-list__bt-no-icon.active {
+    border-color: white;
+    background: transparent;
+    opacity: 0.3; }
+
 .trek-detail .list .item {
   border-left: none;
   border-right: none;
@@ -113,10 +165,14 @@
 .trek-detail__title {
   font-size: 18px; }
 
+.trek-detail__subtitle {
+  font-size: 14px; }
+
 .trek-detail__section-title {
   background: #981d97;
   color: white;
   font-size: 14px;
+  font-weight: bold;
   display: inline-block;
   padding: 10px;
   padding-left: 10px;
@@ -126,17 +182,22 @@
 .trek-detail__main-infos {
   background-color: #981d97;
   padding: 5px;
-  margin: 0 -10px; }
+  margin: 0 -10px;
+  width: auto; }
 
 .trek-detail__main-infos__item {
-  padding: 10px 5px 10px 40px;
+  padding: 10px 0 10px 40px;
   display: inline-block;
   width: 130px;
   position: relative;
   color: white; }
 
+.responsive-sm .col.trek-detail__main-infos__item {
+  margin-bottom: 0; }
+
 .trek-detail__main-infos__item:before {
   width: 30px;
+  height: 30px;
   position: absolute;
   top: 5px;
   left: 5px; }
@@ -166,12 +227,27 @@
   top: 11px;
   left: 11px; }
 
-.trek-detail__usage-infos__item {
-  display: inline-block;
-  position: relative; }
+.trek-detail__extra-infos .trek-detail__extra-infos__item {
+  display: inline; }
+  .trek-detail__extra-infos .trek-detail__extra-infos__item .trek-detail__extra-infos__item__icon .icon {
+    position: relative;
+    top: 6px;
+    height: 30px; }
+    .trek-detail__extra-infos .trek-detail__extra-infos__item .trek-detail__extra-infos__item__icon .icon.icon-network {
+      border: 1px #999999 solid; }
+  .trek-detail__extra-infos .trek-detail__extra-infos__item .trek-detail__extra-infos__item__icon.wrapper {
+    width: 30px;
+    height: 30px;
+    overflow: hidden;
+    display: inline-block; }
 
-.trek-detail__usage-infos__item.icon {
-  height: 30px; }
+.trek-detail__departure-arrival {
+  display: inline-block;
+  vertical-align: bottom;
+  color: #4d4a4a; }
+
+.trek-detail__altimetric-profile {
+  width: 100%; }
 
 .button.icon-top:before {
   display: block; }
@@ -211,10 +287,13 @@
     max-width: 100%; }
 
 .slider-legend {
-  color: #981d97; }
+  color: #4d4a4a;
+  font-style: italic; }
 
 .slider-pager {
   bottom: 5px; }
+  .slider-pager .icon {
+    color: #981d97; }
 
 .bar-main .flex-wrapper {
   margin: 0 5px; }
@@ -360,15 +439,25 @@
 
 .poi-detail__name {
   display: inline-block;
-  vertical-align: bottom; }
+  vertical-align: bottom;
+  color: #4d4a4a;
+  font-weight: bold; }
+
+.poi-detail__distance {
+  display: inline-block;
+  vertical-align: bottom;
+  font-size: 14px;
+  margin: 0 0 2px 2px; }
 
 .poi-detail__description {
-  white-space: normal; }
+  white-space: normal;
+  color: black; }
   .poi-detail__description p {
-    white-space: normal; }
+    white-space: normal;
+    color: black; }
 
-[state^='home.map'] .modal-backdrop .modal {
-  min-height: 33%;
+[state^='home.map'] .modal-backdrop .modal-fullheight {
+  min-height: 100%;
   bottom: 0;
   top: auto; }
 [state^='home.map'] .modal-backdrop .object-title {
@@ -398,63 +487,28 @@
 .modal__actions i {
   color: #981d97; }
 
+@media (min-width: 680px) {
+  .modal {
+    top: 5%;
+    right: 5%;
+    bottom: 5%;
+    left: 5%;
+    overflow: visible;
+    min-height: 240px;
+    width: 90%; } }
 .leaflet-control-layers.leaflet-control {
   display: none; }
 
-.leaflet-live-user {
-  -webkit-animation: pulse 2s ease-out;
-  animation: pulse 2s ease-out;
-  -webkit-animation-iteration-count: infinite;
-  animation-iteration-count: infinite; }
-
-@-webkit-keyframes pulse {
-  from {
-    stroke-width: 15;
-    stroke-opacity: 1; }
-
-  to {
-    stroke-width: 50;
-    stroke-opacity: 0; } }
-@keyframes pulse {
-  from {
-    stroke-width: 15;
-    stroke-opacity: 1; }
-
-  to {
-    stroke-width: 50;
-    stroke-opacity: 0; } }
 span.network-status {
   position: absolute;
   top: 15px;
   right: 50px; }
 
-.leaflet-container {
-  width: 100%;
-  height: 100%; }
-
-.main-container {
-  overflow: hidden; }
-
-.menu-left {
-  background: #981d97; }
-  .menu-left .scroll-content {
-    padding: 0 10px; }
-  .menu-left .button-block {
-    border-radius: 5px;
-    font-size: 14px; }
-
-h1.app-title {
-  font-size: 140%;
-  margin: 0 0.5em; }
-
-.list .item-toggle {
-  padding: 8px; }
-
-.item p {
-  color: #4d4a4a; }
-
 .icon {
   color: #4d4a4a; }
+
+.icon-big {
+  font-size: 90px; }
 
 .bar .button.button-logo {
   width: 45px;
@@ -491,6 +545,12 @@ h1.app-title {
 .platform-ios .ion-android-share:before {
   content: "\f1f1"; }
 
+@media (max-width: 567px) {
+  .responsive-sm.row {
+    flex-direction: row;
+    flex-wrap: wrap; }
+    .responsive-sm.row .col {
+      flex: 1 150px; } }
 @font-face {
   font-family: "geotrek-mobile";
   src: url("../fonts/geotrek-mobile.eot");

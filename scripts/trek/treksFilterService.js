@@ -6,14 +6,14 @@ var geotrekTreks = angular.module('geotrekTreks');
  * Service that gives trek filters
  */
 
-geotrekTreks.service('treksFiltersService', ['$q', function($q) {
+geotrekTreks.service('treksFiltersService', ['$q', 'settings', function($q, settings) {
 
     // Get default value for each filter field
     this.getDefaultActiveFilterValues = function() {
         return {
-            difficulty:   undefined,
-            duration:     undefined,
-            elevation:    undefined,
+            difficulty:   {},
+            duration:     {},
+            elevation:    {},
             download:     undefined,
             theme:        undefined,
             municipality: null,
@@ -29,7 +29,8 @@ geotrekTreks.service('treksFiltersService', ['$q', function($q) {
         if (angular.isUndefined(value)
             || angular.isUndefined(filter)
             || (filter === null)
-            || (value === null))
+            || (value === null)
+            || (angular.equals(filter, {})))
             {
                 valid = false;
             }
@@ -41,23 +42,76 @@ geotrekTreks.service('treksFiltersService', ['$q', function($q) {
 
         // Trek considered as matching if filter not set or if
         // property is empty.
-        if (!(this.isValidFilter(trekValue, filter))) {
-            return true;
-        }
+        var is_valid = true;
 
-        return (trekValue <= filter);
+        if (this.isValidFilter(trekValue, filter)) {
+            if(angular.isNumber(filter)){
+                is_valid = trekValue <= filter;
+            }
+            else{
+                var keys = Object.keys(filter);
+                for (var i = 0; i < keys.length; i++) {
+                    if (filter[keys[i]] === true ){
+                        // In combined filters if one filter is valid, no need to look on the other
+                        // OR operator
+                        if (trekValue <= parseFloat(keys[i])){
+                            return true;
+                        }
+                        else{
+                            is_valid = false;
+                        }
+                    }
+                };
+            }
+        }
+        return is_valid;
+    };
+
+    // Generic function that is called on hardcoded range filters
+    this.filterTrekWithInterval = function(trekValue, filters) {
+        var is_valid = true;
+        var keys = Object.keys(filters);
+        for (var i = 0; i < keys.length; i++) {
+            var filter = filters[keys[i]];
+            if (filter.checked === true ){
+                // In combined filters if one filter is valid, no need to look on the other
+                // OR operator
+                if (parseFloat(trekValue) >= parseFloat(filter.interval[0]) && parseFloat(trekValue) <= parseFloat(filter.interval[1])){
+                    return true;
+                }
+                else{
+                    is_valid = false;
+                }
+            }
+        };
+        return is_valid;
     };
 
     // Generic function that is called on hardcoded filters
     this.filterTrekEquals = function(trekValue, filter) {
 
-        // Trek considered as matching if filter not set or if
-        // property is empty.
-        if (!(this.isValidFilter(trekValue, filter))) {
-            return true;
+        var is_valid = true;
+        if (this.isValidFilter(trekValue, filter)) {
+            if(angular.isNumber(filter)){
+                is_valid = trekValue === filter;
+            }
+            else{
+                var keys = Object.keys(filter);
+                for (var i = 0; i < keys.length; i++) {
+                    if (filter[keys[i]] === true ){
+                        // In combined filters if one filter is valid, no need to look on the other
+                        // OR operator
+                        if (parseFloat(trekValue) === parseFloat(keys[i])){
+                            return true;
+                        }
+                        else{
+                            is_valid = false;
+                        }
+                    }
+                };
+            }
         }
-
-        return (trekValue == filter);
+        return is_valid;
     };
 
     // Generic function that is called on select filters
@@ -86,11 +140,10 @@ geotrekTreks.service('treksFiltersService', ['$q', function($q) {
 
     // Function called each time a filter is modified, to know which treks to displayed
     this.filterTreks = function(trek, activeFilters) {
-
-        return (this.filterTrekWithFilter(trek.properties.difficulty.id, activeFilters.difficulty) &&
-            this.filterTrekWithFilter(trek.properties.duration, activeFilters.duration) &&
-            this.filterTrekWithFilter(trek.properties.ascent, activeFilters.elevation) &&
-            this.filterTrekEquals(trek.mbtiles.isDownloaded ? 1 : 0, activeFilters.download) &&
+        return (this.filterTrekEquals(trek.properties.difficulty.id, activeFilters.difficulty) &&
+            this.filterTrekWithInterval(trek.properties.duration, activeFilters.duration) &&
+            this.filterTrekWithInterval(trek.properties.ascent, activeFilters.elevation) &&
+            this.filterTrekEquals((trek.tiles && trek.tiles.isDownloaded) ? 1 : 0, activeFilters.download) &&
             this.filterTrekWithSelect(trek.properties.themes, activeFilters.theme, 'id') &&
             this.filterTrekWithSelect(trek.properties.usages, activeFilters.use, 'id') &&
             this.filterTrekWithSelect(trek.properties.route, activeFilters.route, 'id') &&
@@ -126,8 +179,19 @@ geotrekTreks.service('treksFiltersService', ['$q', function($q) {
         return array;
     };
 
+    // Sort filter values by their value
+    this.sortFilterValues = function(array) {
+        array.sort(function(a, b) {
+            var valueA = a.value;
+            var valueB = b.value;
+            return (valueA < valueB) ? -1 : (valueA > valueB) ? 1 : 0;
+        });
+
+        return array;
+    };
+
     // Possible values that user can select on filter sidebar menu.
-    // Some are hardcoded (difficulties, durations, elevations),
+    // Some are constants defined in settings (durations, elevations),
     // others come from trek possible values
     this.getTrekFilterOptions = function(treks) {
 
@@ -135,24 +199,34 @@ geotrekTreks.service('treksFiltersService', ['$q', function($q) {
             trekUses = [],
             trekRoute = [],
             trekValleys = [],
-            trekMunicipalities = [];
+            trekMunicipalities = [],
+            trekDifficulties = [];
 
         angular.forEach(treks.features, function(trek) {
+
             // Themes init
             angular.forEach(trek.properties.themes, function(theme) {
                 trekThemes.push({value: theme.id, name: theme.label});
             });
+
+            // Diffulties init
+            var difficulty = trek.properties.difficulty;
+            trekDifficulties.push({value: difficulty.id, name: difficulty.label, icon: difficulty.pictogram});
+
             // Uses init
             angular.forEach(trek.properties.usages, function(usage) {
                 trekUses.push({value: usage.id, name: usage.label});
             });
+
             // Route init
             var route = trek.properties.route;
             trekRoute.push({value: route.id, name: route.label});
+
             // Valleys init
             angular.forEach(trek.properties.districts, function(district) {
                 trekValleys.push({value: district.id, name: district.label});
             });
+
             // Municipalities init
             angular.forEach(trek.properties.cities, function(city) {
                 trekMunicipalities.push({value: city.code, name: city.name});
@@ -165,6 +239,7 @@ geotrekTreks.service('treksFiltersService', ['$q', function($q) {
         trekRoute = this.removeFilterDuplicates(trekRoute);
         trekValleys = this.removeFilterDuplicates(trekValleys);
         trekMunicipalities = this.removeFilterDuplicates(trekMunicipalities);
+        trekDifficulties =  this.removeFilterDuplicates(trekDifficulties);
 
         // Sort values by their name
         trekThemes = this.sortFilterNames(trekThemes);
@@ -172,26 +247,14 @@ geotrekTreks.service('treksFiltersService', ['$q', function($q) {
         trekRoute = this.sortFilterNames(trekRoute);
         trekValleys = this.sortFilterNames(trekValleys);
         trekMunicipalities = this.sortFilterNames(trekMunicipalities);
+        trekDifficulties = this.sortFilterValues(trekDifficulties);
 
         return {
-            difficulties : [
-                { value: 1, name: 'Facile', icon: 'difficulty-1.svg' },
-                { value: 2, name: 'Moyen', icon: 'difficulty-2.svg' },
-                { value: 3, name: 'Difficile', icon: 'difficulty-2.svg' },
-                { value: 4, name: 'Difficile', icon: 'difficulty-2.svg' }
-            ],
-            durations : [
-                { value: 2.5, name: '<2H30', icon: 'duration-1.svg' },
-                { value: 4, name: '1/2', icon: 'duration-2.svg' },
-                { value: 8, name: 'Journée', icon: 'duration-3.svg' }
-            ],
-            elevations : [
-                { value: 300, name: '300m', icon: 'deniv1.svg' },
-                { value: 600, name: '600m', icon: 'deniv1.svg' },
-                { value: 1000, name: '1000m', icon: 'deniv1.svg' }
-            ],
+            difficulties : trekDifficulties,
+            durations : settings.filters.durations,
+            elevations :  settings.filters.elevations,
             downloads : [
-                { value: 1, name: 'Trek map available offline', icon: 'icon_offline.png' }
+                { value: 1, name: 'nav_trek_map.offline', icon: 'icon_offline.svg' }
             ],
             themes : trekThemes,
             uses: trekUses,

@@ -11,9 +11,14 @@
 	}
 
 	.slider-legend {
-		color: $highlight-text-color;
+		color: $complementaryColor2;
+		font-style: italic;
 	}
 
 	.slider-pager {
 		bottom: 5px;
+
+		.icon {
+			color: $primaryColor;
+		}
 	}

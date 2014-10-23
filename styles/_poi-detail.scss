@@ -1,12 +1,23 @@
 .poi-detail__name {
     display: inline-block;
     vertical-align: bottom;
+    color: $complementaryColor2;
+    font-weight: bold;
+}
+
+.poi-detail__distance {
+    display: inline-block;
+    vertical-align: bottom;
+    font-size: 14px;
+    margin: 0 0 2px 2px;
 }
 
 .poi-detail__description {
     white-space: normal;
+    color: black;
 
     p {
-        white-space: normal;        
+        white-space: normal;
+        color: black;
     }
 }

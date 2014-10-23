@@ -12,7 +12,7 @@ geotrekTreks.config(function($stateProvider) {
         controller: 'TrekController',
         resolve: {
             treks: function(treksFactory) {
-                return treksFactory.getGeolocalizedTreks();
+                return treksFactory.getTreks();
             },
             staticPages: function(staticPagesFactory) {
                 return staticPagesFactory.getStaticPages();
@@ -30,7 +30,7 @@ geotrekTreks.config(function($stateProvider) {
                 return $q.all(promises)
                 .then(function(isDownloadedList) {
                     for(var i=0; i<isDownloadedList.length; i++) {
-                        treksList[i]['mbtiles'] = {
+                        treksList[i]['tiles'] = {
                             isDownloaded: isDownloadedList[i]
                         };
                     }
@@ -48,10 +48,10 @@ geotrekTreks.config(function($stateProvider) {
         controller: 'TrekDetailController',
         resolve: {
             trek: function(treksFactory, $stateParams) {
-                return treksFactory.getGeolocalizedTrek($stateParams.trekId);
+                return treksFactory.getTrek($stateParams.trekId);
             },
             pois: function(poisFactory, $stateParams) {
-                return poisFactory.getGeolocalizedPOIsFromTrek($stateParams.trekId);
+                return poisFactory.getPoisFromTrek($stateParams.trekId);
             }
         }
     });

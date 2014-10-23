@@ -6,6 +6,7 @@ var geotrekApp = angular.module('geotrekMobileApp',
     ['ionic', 'ngResource', 'ngSanitize', 'ui.router', 'ui.bootstrap.buttons', 'geotrekTreks',
      'geotrekPois', 'geotrekMap', 'geotrekInit', 'geotrekGeolocation', 'ngCordova',
      'geotrekGlobalization', 'geotrekAppSettings', 'geotrekUserSettings', 'geotrekStaticPages',
+     'geotrekLog', 'geotrekNotification',
      // angular-translate module for i18n/l10n (http://angular-translate.github.io/)
      'pascalprecht.translate']);
 
@@ -29,18 +30,23 @@ window.ionic.Platform.ready(function() {
 
 });
 
-geotrekApp.config(['$urlRouterProvider', '$compileProvider', '$logProvider',
-    function($urlRouterProvider, $compileProvider, $logProvider) {
+geotrekApp.config(['$urlRouterProvider', '$compileProvider',
+    function($urlRouterProvider, $compileProvider) {
 
-    $urlRouterProvider.otherwise('/trek');
     // Root url is defined in init module
-
-    $logProvider.debugEnabled = true;
+    $urlRouterProvider.otherwise('/trek');
 
     // Add cdvfile to allowed protocols in ng-src directive
     $compileProvider.imgSrcSanitizationWhitelist(/^\s*(https?|file|blob|cdvfile):|data:image\//);
 }])
-.run(['$rootScope', '$log', '$window', '$state', function($rootScope, $log, $window, $state) {
+.filter('externalLinks', function() {
+    return function(text) {
+        return String(text).replace(/href=/gm, "class=\"external-link\" href=");
+    }
+})
+.run(['$rootScope', 'logging', '$window', '$state', 'globalizationSettings', '$ionicPlatform', '$ionicLoading', '$translate',
+function($rootScope, logging, $window, $state, globalizationSettings, $ionicPlatform, $ionicLoading, $translate) {
+
     $rootScope.$on('$stateChangeError', function (evt, to, toParams, from, fromParams, error) {
         if (!!window.cordova) {
             if (error.message) {
@@ -48,11 +54,17 @@ geotrekApp.config(['$urlRouterProvider', '$compileProvider', '$logProvider',
             } else {
                 console.error('$stateChangeError : ' + JSON.stringify(error));
             }
+            $translate(['error_message', 'error_title']).then(function(translations) {
+                $cordovaDialogs.alert(translations.error_message, translations.error_title, 'OK')
+                .then(function() {
+                    $state.go('preload');
+                });
+            });
         } else {
             console.error('$stateChangeError :', error);
         }
     });
-
+    globalizationSettings.setDefaultPrefix();
     $rootScope.$on('$stateChangeSuccess', function (evt, to, toParams, from, fromParams, error) {
         // Adding state current name on html body markup to design some elements according to current state.
         $rootScope.statename = $state.current.name;
@@ -61,13 +73,13 @@ geotrekApp.config(['$urlRouterProvider', '$compileProvider', '$logProvider',
     $rootScope.network_available = true;
 
     function onlineCallback() {
-        $log.info('online');
+        logging.info('online');
         $rootScope.network_available = true;
         $rootScope.$digest();
     }
 
     function offlineCallback() {
-        $log.info('offline');
+        logging.info('offline');
         $rootScope.network_available = false;
         $rootScope.$digest();
     }
@@ -78,4 +90,38 @@ geotrekApp.config(['$urlRouterProvider', '$compileProvider', '$logProvider',
     // Define utils variables for specific device behaviours
     $rootScope.isAndroid = $window.ionic.Platform.isAndroid() || $window.ionic.Platform.platforms[0] === 'browser';
     $rootScope.isIOS = $window.ionic.Platform.isIOS();
+
+    // back button => back in history
+    $ionicPlatform.registerBackButtonAction(function () {
+        if($state.current.name=="preload"){
+            navigator.app.exitApp();
+        } else {
+            $window.history.back();
+        }
+    }, 100);
+
+    // spinner when routing
+    $rootScope.$on('$stateChangeStart', function(event, toState, toParams, fromState, fromParams) {
+        $ionicLoading.show({
+            template: '<i class="icon icon-big ion-looping"></i>'
+        });
+    });
+    $rootScope.$on('$stateChangeSuccess', function(event, toState, toParams, fromState, fromParams) {
+        $ionicLoading.hide();
+    });
+
+    // open external links in device default browser
+    if(angular.isDefined(window.cordova)) {
+        window.setInterval(function () {
+            angular.forEach(document.querySelectorAll('a.external-link'), function(element) {
+                angular.element(element).bind('click', function (event) {
+                    event.preventDefault();
+                    var url = element.href;
+                    window.open(encodeURI(url), '_system', 'location=yes');
+                    return false;
+                });
+            });
+        }, 1000);
+    }
+
 }]);

@@ -2,39 +2,35 @@
 
 var geotrekInit = angular.module('geotrekInit');
 
-geotrekInit.service('syncDataService', ['$q', '$log', 'treksFactory', 'poisFactory', 'settings', 'mapFactory', 'staticPagesFactory', function($q, $log, treksFactory, poisFactory, settings, mapFactory, staticPagesFactory) {
 
-    this.run = function() {
+geotrekInit.service('syncDataService', ['$q', '$window', '$cordovaNetwork','logging', 'settings', 'mapFactory', 'utils', 'globalizationSettings', 'treksFactory',
+    function($q, $window, $cordovaNetwork, logging, settings, mapFactory, utils, globalizationSettings, treksFactory) {
 
-        var deferred = $q.defer();
+        this.run = function(progress) {
 
-        staticPagesFactory.downloadStaticPages(settings.remote.STATIC_PAGES_URL)
-        .then(function(result) {
-            return treksFactory.downloadTreks(settings.remote.TREK_REMOTE_FILE_URL);
-        })
-        .then(function(result) {
-            return treksFactory.getTreks();
-        })
-        .then(function(treks) {
-            var trekIds = [];
-            angular.forEach(treks.features, function(trek) {
-                trekIds.push(trek.id);
-            });
+            var deferred = $q.defer();
 
-            // Downloading Trek POIs
-            return poisFactory.downloadPois(trekIds);
-        })
-        .then(function(result) {
-            return mapFactory.downloadGlobalBackground(settings.remote.MAP_GLOBAL_BACKGROUND_REMOTE_FILE_URL);
-        })
-        .then(function(result) {
-            deferred.resolve(result);
-        })
-        .catch(function(error) {
-            $log.warn(error);
-            deferred.resolve(error);
-        });
+            if (angular.isDefined($window.cordova) && $cordovaNetwork.isOnline()) {
+                utils.downloadAndUnzip(globalizationSettings.FULL_DATA_REMOTE_FILE_URL, settings.device.CDV_ROOT + "/" + settings.device.RELATIVE_ROOT, false, progress('data'))
+                .then(function(response) {
+                    if(!response.useCache) {
+                        return treksFactory.replaceImgURLs();
+                    }
+                })
+                .then(function() {
+                    return mapFactory.downloadGlobalBackground(settings.remote.MAP_GLOBAL_BACKGROUND_REMOTE_FILE_URL, progress('map'));
+                })
+                .then(function() {
+                    deferred.resolve();
+                })
+                .catch(function(error) {
+                    logging.warn(error);
+                    deferred.resolve(error);
+                });
+            } else {
+                deferred.resolve();
+            }
 
-        return deferred.promise;
-    };
+            return deferred.promise;
+        };
 }]);

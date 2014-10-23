@@ -4,22 +4,35 @@ var geotrekGeolocation = angular.module('geotrekGeolocation');
 
 geotrekGeolocation.service('geolocationDeviceService', ['$q', '$cordovaGeolocation', function ($q, $cordovaGeolocation) {
 
+    // There variables are used to limit watchPosition callbacks
+    var iterNum = 0, maxIterNum = 1;
+
     this.getCurrentPosition = function(options) {
         return $cordovaGeolocation.getCurrentPosition(options);
     };
 
-    this.watchPosition = function($scope, options) {
+    this._broadcast = function($scope, dataToBroadcast) {
+        if (iterNum === maxIterNum) {
+            $scope.$broadcast('watchPosition', dataToBroadcast);
+            iterNum = 0;
+        }
+        else {
+            iterNum += 1;
+        }
+    };
 
+    this.watchPosition = function($scope, options) {
         var deferred = $q.defer(),
-            watchResult = $cordovaGeolocation.watchPosition(options);
+            watchResult = $cordovaGeolocation.watchPosition(options),
+            _this = this;
 
         watchResult.promise
         .then(function(position) {
-            $scope.$broadcast('watchPosition', 'ngcordova geolocation watch uses notify, not resolve');
+            _this._broadcast($scope, 'ngcordova geolocation watch uses notify, not resolve');
         }, function(positionError) {
-            $scope.$broadcast('watchPosition', positionError);
+            _this._broadcast($scope, positionError);
         }, function(position) {
-            $scope.$broadcast('watchPosition', {'lat': position.coords.latitude, 'lng': position.coords.longitude});
+            _this._broadcast($scope,  {'lat': position.coords.latitude, 'lng': position.coords.longitude});
         });
 
         return watchResult.watchId;

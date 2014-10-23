@@ -10,22 +10,24 @@ geotrekInit.config(function($stateProvider) {
         templateUrl: 'views/preload.html',
         controller: 'AssetsController'
     });
-}).controller('AssetsController', function ($rootScope, $scope, $state, $window, $q, $log, treksFactory, staticPagesFactory, cfpLoadingBar, syncDataService, checkDataService, globalizationService, $translate) {
+}).controller('AssetsController', function ($rootScope, $scope, $state, $window, $q, logging, treksFactory, staticPagesFactory, cfpLoadingBar, syncDataService, globalizationService, $translate) {
 
-    $scope.message = 'Chargement des données en cours...';
+    $translate('init.loading').then(function(msg) {
+        $scope.message = msg;
+    });
 
     cfpLoadingBar.start();
+    $scope.progress = "0%";
+
+    var displayProgress = function(label) {
+        return function(progress) {
+            $scope.progress = label + ' ' + Math.round(100 * progress.loaded/progress.total) + '%';
+        }
+    };
 
     // Synchronizing data with server
-    syncDataService.run()
-    .then(function(result) {
-        // Simulating almost ended loading
-        cfpLoadingBar.set(0.9);
-
-        // Checking that data is OK before landing page redirection
-        return checkDataService.isReady();
-    })
-    .then(function(treks) {
+    syncDataService.run(displayProgress)
+    .then(function() {
         // Initializing app default language
         return globalizationService.init();
     })
@@ -35,8 +37,10 @@ geotrekInit.config(function($stateProvider) {
     })
     .catch(function(error) {
         cfpLoadingBar.complete();
-        $log.error(error);
-        $scope.message = "Problème lors du chargement des données. Si c'est la première fois que vous utilisez Geotrek-Mobile, veuillez avoir une connexion Internet active.";
+        logging.error(error);
+        $translate('init.error_loading').then(function(msg) {
+            $scope.message = msg;
+        });
     });
 
 });

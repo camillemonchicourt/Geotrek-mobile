@@ -5,7 +5,7 @@ var geotrekTreks = angular.module('geotrekTreks');
 /**
  * Service that persists and retrieves treks from data source
  */
-geotrekTreks.factory('treksFactory', ['$injector', '$window', '$rootScope', '$q', '$log', 'geolocationFactory', 'utils', function ($injector, $window, $rootScope, $q, $log, geolocationFactory, utils) {
+geotrekTreks.factory('treksFactory', ['$injector', '$window', '$rootScope', '$q', 'logging', 'geolocationFactory', 'utils', function ($injector, $window, $rootScope, $q, logging, geolocationFactory, utils) {
 
     var treksFactory;
 
@@ -34,62 +34,33 @@ geotrekTreks.factory('treksFactory', ['$injector', '$window', '$rootScope', '$q'
     treksFactory.getParkingPoint = function(trek) {
         var parkingCoordinates = trek.properties.parking_location;
 
-        return {'lat': parkingCoordinates[1],
-                'lng': parkingCoordinates[0]}
+        return parkingCoordinates ? {'lat': parkingCoordinates[1],
+                'lng': parkingCoordinates[0]} : null
     };
 
-    treksFactory.getGeolocalizedTreks = function() {
+    treksFactory.getTrekDistance = function(trek) {
+        return geolocationFactory.getLatLngPosition()
+        .then(function(userPosition) {
+            trek.distanceFromUser = treksFactory._computeTrekDistance(trek, userPosition);
+            return userPosition
+        });
+    };
 
-        var deferred = $q.defer();
-
-        treksFactory.getTreks()
-        .then(function(treks) {
-
-            // Getting user geoloc to compute trek distance from user on-the-fly
-            geolocationFactory.getLatLngPosition()
-            .then(function(userPosition) {
-
-                angular.forEach(treks.features, function(trek) {
-                    // First coordinate is trek starting point
-                    var startPoint = treksFactory.getStartPoint(trek);
-                    trek.distanceFromUser = utils.getDistanceFromLatLonInKm(userPosition.lat, userPosition.lng, startPoint.lat, startPoint.lng).toFixed(2);
-                });
-
-                deferred.resolve(treks);
-
-            }, function(error) {
-                $log.warn(error);
-                deferred.resolve(treks);
+    treksFactory.getTreksDistance = function(treks) {
+        return geolocationFactory.getLatLngPosition()
+        .then(function(userPosition) {
+            angular.forEach(treks.features, function(trek) {
+                trek.distanceFromUser = treksFactory._computeTrekDistance(trek, userPosition);
             });
         });
-
-        return deferred.promise;
     };
 
-    treksFactory.getGeolocalizedTrek = function(_trekId) {
-
-        var deferred = $q.defer();
-
-        treksFactory.getTrek(_trekId)
-        .then(function(trek) {
-
-            // Getting user geoloc to compute trek distance from user on-the-fly
-            geolocationFactory.getLatLngPosition()
-            .then(function(userPosition) {
-
-                // First coordinate is trek starting point
-                var startPoint = treksFactory.getStartPoint(trek);
-                trek.distanceFromUser = utils.getDistanceFromLatLonInKm(userPosition.lat, userPosition.lng, startPoint.lat, startPoint.lng).toFixed(2);
-                deferred.resolve(trek);
-
-            }, function(error) {
-                $log.warn(error);
-                deferred.resolve(trek);
-            });
-        });
-
-        return deferred.promise;
+    treksFactory._computeTrekDistance = function(trek, userPosition) {
+        // First coordinate is trek starting point
+        var startPoint = treksFactory.getStartPoint(trek);
+        return utils.getDistanceFromLatLonInKm(userPosition.lat, userPosition.lng, startPoint.lat, startPoint.lng).toFixed(2);
     };
+
 
     treksFactory.getTrek = function(_trekId) {
         var trekId = parseInt(_trekId),

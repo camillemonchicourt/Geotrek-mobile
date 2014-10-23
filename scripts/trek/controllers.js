@@ -3,12 +3,15 @@
 var geotrekTreks = angular.module('geotrekTreks');
 
 geotrekTreks.controller('TrekController',
-    ['$rootScope', '$scope', '$state', '$window', '$ionicActionSheet', '$ionicModal', '$log', 'treks', 'staticPages', 'localeSettings', 'utils', 'treksFiltersService',
-     function ($rootScope, $scope, $state, $window, $ionicActionSheet, $ionicModal, $log, treks, staticPages, localeSettings, utils, treksFiltersService) {
+    ['$rootScope', '$scope', '$state', '$window', '$ionicActionSheet', '$ionicModal', '$timeout','logging', 'treks', 'staticPages', 'localeSettings', 'utils', 'treksFiltersService', 'treksFactory',
+     function ($rootScope, $scope, $state, $window, $ionicActionSheet, $ionicModal, $timeout,logging, treks, staticPages, localeSettings, utils, treksFiltersService, treksFactory) {
 
     // treks and staticPages come from TrekController routing resolve
     $rootScope.treks = treks;
     $rootScope.staticPages = staticPages;
+
+    // get distance to treks
+    treksFactory.getTreksDistance($rootScope.treks);
 
     // Define filters from service to the scope for the view
     $scope.filtersData = treksFiltersService.getTrekFilterOptions(treks);
@@ -30,7 +33,19 @@ geotrekTreks.controller('TrekController',
     };
 
     $scope.resetFilters = function () {
-        $scope.activeFilters = treksFiltersService.getDefaultActiveFilterValues();
+
+        angular.forEach(['difficulty', 'duration', 'elevation'], function(field){
+            angular.forEach($scope.activeFilters[field], function(value, key) {
+                $scope.activeFilters[field][key].checked = false;
+            });
+        });
+        $scope.activeFilters.download =     undefined;
+        $scope.activeFilters.theme =        undefined;
+        $scope.activeFilters.municipality = null;
+        $scope.activeFilters.use =          null;
+        $scope.activeFilters.valley =       null;
+        $scope.activeFilters.route =        null;
+        $scope.activeFilters.search =       '';
     };
 
     $scope.clearSearch = function () {
@@ -64,8 +79,8 @@ geotrekTreks.controller('TrekController',
     });
 }])
 .controller('TrekListController',
-    ['$rootScope', '$state', '$scope', '$ionicPopup', '$q', 'mapFactory', 'treks', 'userSettingsService',
-    function ($rootScope, $state, $scope, $ionicPopup, $q, mapFactory, treks, userSettingsService) {
+    ['$rootScope', '$state', '$scope', '$ionicPopup', '$q', '$translate', 'mapFactory', 'treks', 'userSettingsService',
+    function ($rootScope, $state, $scope, $ionicPopup, $q, $translate, mapFactory, treks, userSettingsService) {
 
     // Ordering by distance
     // If distance is not available, default ordering is trek.geojson one
@@ -84,84 +99,77 @@ geotrekTreks.controller('TrekController',
     };
 
     $scope.downloadTile = function(trekId) {
-
-        // We prevent tile download if network is not available
-        if (!$rootScope.network_available) {
-            $ionicPopup.alert({
-                title: 'Network cannot be reached',
-                template: 'Check your network connection, needed to download trek precise maps'
-            });
-        }
-        else {
-
-            // Getting user connection settings, to know if we are in WiFi only mode
-            var template = 'You will download precise map for this trek. Are you sure ?';
-            if (userSettingsService.warnForDownload()) {
-                template += '<br/><strong>Warning</strong>: you are not WiFi connected, be aware that some mobile data will be spent.';
+        $translate([
+            'trek_controller_no_network_title',
+            'trek_controller_no_network_label',
+            'trek_controller_download_confirm_message',
+            'trek_controller_donwload_warning_title',
+            'trek_controller_donwload_warning_message',
+            'trek_controller_download_confirm_title'
+        ]).then(function(translations) {
+            // We prevent tile download if network is not available
+            if (!$rootScope.network_available) {
+                $ionicPopup.alert({
+                    title: translations.trek_controller_no_network_title,
+                    template: translations.trek_controller_no_network_label
+                });
             }
+            else {
 
-            var confirmPopup = $ionicPopup.confirm({
-                title: 'Download trek map',
-                template: template
-            });
-
-            var currentTrek = getTrekById(treks.features, trekId);
-            currentTrek.mbtiles.realProgress = 0;
-            currentTrek.mbtiles.inDownloadProgress = false;
-
-            confirmPopup.then(function(confirmed) {
-                if(confirmed) {
-                    currentTrek.mbtiles.inDownloadProgress = true;
-                    $q.when(mapFactory.downloadTrekPreciseBackground(trekId))
-                    .then(function(result) {
-                        currentTrek.mbtiles.inDownloadProgress = false;
-                        currentTrek.mbtiles.isDownloaded = true;
-                    }, function(error) {
-                        currentTrek.mbtiles.inDownloadProgress = false;
-                    }, function(progress) {
-                        currentTrek.mbtiles.inDownloadProgress = true;
-                        currentTrek.mbtiles.realProgress = Math.floor(progress.loaded / progress.total * 100);
-                    });
+                // Getting user connection settings, to know if we are in WiFi only mode
+                var template = translations.trek_controller_download_confirm_message;
+                if (userSettingsService.warnForDownload()) {
+                    template += '<br/><strong>' + translations.trek_controller_donwload_warning_title +'</strong>: ' + translations.trek_controller_donwload_warning_message;
                 }
-            });
-        }
-    };
 
-    $scope.removeTile = function(trekId) {
+                var confirmPopup = $ionicPopup.confirm({
+                    title: translations.trek_controller_download_confirm_title,
+                    template: template
+                });
 
-        var confirmPopup = $ionicPopup.confirm({
-            title: 'Remove trek map',
-            template: 'Are you sure to remove trek precise map ?'
-        });
+                var currentTrek = getTrekById(treks.features, trekId);
+                currentTrek.tiles.realProgress = 0;
+                currentTrek.tiles.inDownloadProgress = false;
 
-        var currentTrek = getTrekById(treks.features, trekId);
-
-        confirmPopup.then(function(confirmed) {
-            if(confirmed) {
-                $q.when(mapFactory.removeTrekPreciseBackground(trekId))
-                .then(function(result) {
-                    currentTrek.mbtiles.isDownloaded = false;
-                }, function(error) {
-                    $log.error(error);
+                confirmPopup.then(function(confirmed) {
+                    if(confirmed) {
+                        currentTrek.tiles.inDownloadProgress = true;
+                        $q.when(mapFactory.downloadTrekPreciseBackground(trekId))
+                        .then(function(result) {
+                            currentTrek.tiles.inDownloadProgress = false;
+                            currentTrek.tiles.isDownloaded = true;
+                        }, function(error) {
+                            currentTrek.tiles.inDownloadProgress = false;
+                        }, function(progress) {
+                            currentTrek.tiles.inDownloadProgress = true;
+                            currentTrek.tiles.realProgress = Math.floor(progress.loaded / progress.total * 100);
+                        });
+                    }
                 });
             }
         });
     };
 }])
 .controller('TrekDetailController',
-    ['$rootScope', '$state', '$scope', '$ionicModal', '$stateParams', '$sce', 'trek', 'pois', 'socialSharingService',
-    function ($rootScope, $state, $scope, $ionicModal, $stateParams, $sce, trek, pois, socialSharingService) {
+    ['$rootScope', '$state', '$scope', '$ionicModal', '$stateParams', '$window', '$sce', 'trek', 'pois', 'socialSharingService', 'treksFactory', 'poisFactory',
+    function ($rootScope, $state, $scope, $ionicModal, $stateParams, $window, $sce, trek, pois, socialSharingService, treksFactory, poisFactory) {
 
     $scope.trekId = $stateParams.trekId;
     $scope.trek = trek;
+    
     // We need to declare our json HTML data as safe using $sce
     $scope.teaser = $sce.trustAsHtml(trek.properties.description_teaser);
     $scope.pois = pois;
 
+    // get distance to treks and pois
+    treksFactory.getTrekDistance($scope.trek).then(function(userPosition) {
+        poisFactory.getPoisDistance($scope.pois, userPosition);
+    });
+
     // Display the modal (this is the entire view here)
     $ionicModal.fromTemplateUrl('views/trek_detail.html', {
         scope: $scope,
-        animation: 'slide-in-up'
+        animation: 'no-animation'
     }).then(function(modal) {
         $scope.modal = modal;
         $scope.modal.show();
@@ -172,7 +180,12 @@ geotrekTreks.controller('TrekController',
         $scope.modal.remove();
     });
 
+    $scope.back = function() {
+        $window.history.go(-1);
+    }
+
     $scope.share = function() {
         socialSharingService.share($scope.trek.properties.name);
     };
+
 }]);

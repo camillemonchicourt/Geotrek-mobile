@@ -8,7 +8,7 @@ var geotrekApp = angular.module('geotrekMobileApp');
  *
  */
 
-geotrekApp.factory('utils', ['$q', 'settings', '$cordovaFile', '$http', '$log', '$rootScope', '$ionicModal', function ($q, settings, $cordovaFile, $http, $log, $rootScope, $ionicModal) {
+geotrekApp.factory('utils', ['$q', 'settings', '$cordovaFile', '$http', 'logging', '$rootScope', '$ionicModal', function ($q, settings, $cordovaFile, $http, logging, $rootScope, $ionicModal) {
 
     var downloadFile = function(url, filepath, forceDownload) {
 
@@ -56,7 +56,7 @@ geotrekApp.factory('utils', ['$q', 'settings', '$cordovaFile', '$http', '$log', 
                         // If status is 304, it means that server file is older than device one
                         // Do nothing.
                         var msg = 'File not changed (304) : ' + url + ' at ' + filepath;
-                        $log.info(msg);
+                        logging.info(msg);
                         deferred.resolve({message: msg, type: 'connection', data: {status: status}});
                     }
                     else {
@@ -64,11 +64,11 @@ geotrekApp.factory('utils', ['$q', 'settings', '$cordovaFile', '$http', '$log', 
 
                         // We can't connect to URL
                         if (status === 0) {
-                            $log.info('Network unreachable');
+                            logging.info('Network unreachable');
                             deferred.reject({message: 'Network unreachable', type: 'connection', data: {status: status}});
                         }
                         else {
-                            $log.info('Response error status ' + status);
+                            logging.info('Response error status ' + status);
                             deferred.reject({message: 'Response error ', type: 'connection', data: {status: status}});
                         }
                     }
@@ -77,11 +77,11 @@ geotrekApp.factory('utils', ['$q', 'settings', '$cordovaFile', '$http', '$log', 
 
             }, function() {
                 // If there is no file with that path, we download it !
-                $log.info('cannot read ' + filepath + ' so downloading it !');
+                logging.info('cannot read ' + filepath + ' so downloading it at ' + url);
                 return $cordovaFile.downloadFile(url, filepath);
             });
         } else {
-            $log.info('forcing download of ');
+            logging.info('forcing download of ' + filepath + ' at ' + url);
             return $cordovaFile.downloadFile(url, filepath);
         }
     };
@@ -120,9 +120,68 @@ geotrekApp.factory('utils', ['$q', 'settings', '$cordovaFile', '$http', '$log', 
         });
     };
 
+    var unzip = function(zipLocalPath, toPath) {
+
+        var deferred = $q.defer();
+
+        // Calling unzip method from Zip Plugin (https://github.com/MobileChromeApps/zip)
+        zip.unzip(zipLocalPath, toPath, function(result) {
+
+            if (result == 0) {
+                deferred.resolve("unzip complete");
+            }
+            else {
+                deferred.reject("unzip failed");
+            }
+
+        }, function(eventProgress) {
+            // eventProgress is a dict with 2 keys : loaded and total
+            deferred.notify(eventProgress);
+        });
+
+        return deferred.promise;
+    };
+
+    var downloadAndUnzip = function(url, folderPath, forceUnzip, progress) {
+        var filename = url.split(/[\/]+/).pop();
+        return downloadFile(url, folderPath + "/" + filename)
+        .then(function(response) {
+            if(response.data && response.data.status && response.data.status == 304 && !forceUnzip) {
+                progress({loaded: 100, total: 100});
+                var deferred = $q.defer();
+                deferred.resolve({useCache: true, message: 'File already there, we assume it had been unzipped previously.'});
+                return deferred.promise;
+            } else {
+                return unzip(folderPath + "/" + filename, folderPath);
+            }
+        }, null, progress);
+    };
+
+
+    var removeDir = function(path) {
+        var defered = $q.defer();
+        window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, function gotFS(fileSystem) {
+            fileSystem.root.getDirectory(path, {create: false}, function(parent) {
+                parent.removeRecursively(
+                    defered.resolve
+                    , function() {
+                        defered.reject({message: 'Directory remove error', data: path});
+                    });
+            }, function() {
+                defered.reject({message: 'Directory not found', data: path});
+            });
+        }, function() {
+            defered.reject({message: 'Filesystem not found', data: path});
+        });
+        return defered.promise;
+    };
+
     return {
         downloadFile: downloadFile,
         getDistanceFromLatLonInKm: getDistanceFromLatLonInKm,
-        createModal: createModal
+        createModal: createModal,
+        unzip: unzip,
+        downloadAndUnzip: downloadAndUnzip,
+        removeDir: removeDir
     };
 }]);

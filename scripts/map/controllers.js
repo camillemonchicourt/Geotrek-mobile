@@ -2,8 +2,9 @@
 
 var geotrekMap = angular.module('geotrekMap');
 
-geotrekMap.controller('MapController', ['$rootScope', '$state', '$scope', '$log', '$window', 'leafletData', 'filterFilter', 'settings', 'geolocationFactory', 'treksFactory', 'iconsService', 'treks', 'utils', 'leafletService', 'leafletPathsHelpers', 'mapParameters', 'mapFactory', 'poisFactory',
-                                       function ($rootScope, $state, $scope, $log, $window, leafletData, filterFilter, settings, geolocationFactory, treksFactory, iconsService, treks, utils, leafletService, leafletPathsHelpers, mapParameters, mapFactory, poisFactory) {
+geotrekMap.controller('MapController', 
+    ['$rootScope', '$state', '$scope', 'logging', '$window', 'leafletData', 'filterFilter', 'settings', 'geolocationFactory', 'treksFactory', 'iconsService', 'treks', 'utils', 'leafletService', 'leafletPathsHelpers', 'mapParameters', 'mapFactory', 'poisFactory', 'notificationFactory', 'userSettingsService',
+    function ($rootScope, $state, $scope, logging, $window, leafletData, filterFilter, settings, geolocationFactory, treksFactory, iconsService, treks, utils, leafletService, leafletPathsHelpers, mapParameters, mapFactory, poisFactory, notificationFactory, userSettingsService) {
     $rootScope.statename = $state.current.name;
 
     // Initializing leaflet map
@@ -11,50 +12,26 @@ geotrekMap.controller('MapController', ['$rootScope', '$state', '$scope', '$log'
 
     $scope.$on('leafletDirectiveMarker.click', function(event, args){
         var modalScope = {
-            objectToDisplay: $scope.markers[args.markerName]
+            objectToDisplay: leafletService.getMarkers()[args.markerName]
         };
         utils.createModal('views/map_trek_detail.html', modalScope);
     });
 
     $scope.$on('leafletDirectiveMap.geojsonClick', function(event, trek) {
-        var modalScope = {
-            objectToDisplay: {
-                name: trek.properties.name,
-                description: trek.properties.description,
-                duration_pretty: trek.properties.duration_pretty,
-                difficulty: trek.properties.difficulty,
-                ascent: trek.properties.ascent,
-                length: trek.properties.length,
-                id: trek.id,
-                usages: trek.properties.usages
-            }
-        };
-        utils.createModal('views/map_trek_detail.html', modalScope);
-    });
-
-    leafletData.getMap().then(function(map) {
-
-        mapFactory.getDownloadedLayers()
-        .then(function(downloadedLayers) {
-
-            angular.forEach(downloadedLayers, function(layerStructure) {
-                map.addLayer(layerStructure.layer);
-                layerStructure.layer.bringToFront();
-            });
-        });
+        $state.go("home.trek.detail", { trekId: trek.id });
     });
 
     // Add treks geojson to the map
     function showTreks(updateBounds) {
 
         // Remove all markers so the displayed markers can fit the search results
-        $scope.markers = {};
+        $scope.leafletService = leafletService;
 
         angular.extend($scope, {
             geojson: {
                 data: filterFilter(treks.features, $scope.activeFilters.search),
                 filter: $scope.filterTreks,
-                style: {'color': '#F89406', 'weight': 5, 'opacity': 0.8},
+                style: {'color': '#F89406', 'weight': 8, 'opacity': 0.8},
                 postLoadCallback: function(map, feature) {
                     if ((updateBounds == undefined) || (updateBounds == true)){
                         // With this call, map will always cover all geojson data area
@@ -62,17 +39,6 @@ geotrekMap.controller('MapController', ['$rootScope', '$state', '$scope', '$log'
                     }
                 },
                 onEachFeature: function(feature, layer) {
-
-                    // Adding markers linked to current trek
-                    poisFactory.getPoisFromTrek(feature.id)
-                        .then(function(pois) {
-                        var treksMarkers = leafletService.createMarkersFromTrek(feature, pois.features);
-                        angular.extend($scope.markers, treksMarkers);
-                    });
-
-                    // Adding arrows to show trek's direction
-                    layer.setText('>         ', {repeat:true, offset: 10});
-
                     // The version of onEachFeature from the angular-leaflet-directive is overwritten by the current onEachFeature
                     // It is therefore necessary to broadcast the event on click, as the angular-leaflet-directive does.
                     layer.on({
@@ -93,7 +59,7 @@ geotrekMap.controller('MapController', ['$rootScope', '$state', '$scope', '$log'
     }
 
     showTreks();
-    
+
     // Show the scale and attribution controls
     leafletData.getMap().then(function(map) {
         leafletService.setScale(map);
@@ -105,13 +71,37 @@ geotrekMap.controller('MapController', ['$rootScope', '$state', '$scope', '$log'
         .then(function(result) {
             $scope.paths['userPosition'] = leafletService.setPositionMarker(result);
         }, function(error) {
-            $log.warn(error);
+            logging.warn(error);
         });
 
     $scope.$on('watchPosition', function(scope, position) {
-        leafletData.getMap().then(function(map) {
-            $scope.paths['userPosition'] = leafletService.setPositionMarker(position);
-        });
+        if (position.lat && position.lng) {
+            var alertOnPois;
+            userSettingsService.getUserSettings().then(function(userSettings) {
+                alertOnPois = userSettings.alertOnPois;
+                if (alertOnPois) {
+                    poisFactory.getAllPois().then(function(pois) {
+                        var nearbyPois = mapFactory.getNearbyPois();
+                        angular.forEach(pois, function(poi) {
+                            var poiDistanceFromUser = utils.getDistanceFromLatLonInKm(position.lat, position.lng, poi.geometry.coordinates[1], poi.geometry.coordinates[0]).toFixed(2);
+                            if (poiDistanceFromUser < settings.device.POI_ALERT_RADIUS) {
+                                if (!nearbyPois[poi.id]) {
+                                    var msg = poi.properties.name + ' (' + poiDistanceFromUser * 1000 + 'm)';
+                                    notificationFactory.notify(msg);
+                                    mapFactory.addNearbyPoi(poi.id);
+                                }
+                            } else {
+                                mapFactory.removeNearbyPoi(poi.id);
+                            };
+                        })
+                    });
+                };
+            });
+
+            leafletData.getMap().then(function(map) {
+                $scope.paths['userPosition'] = leafletService.setPositionMarker(position);
+            });
+        }
     });
 
     // README: watchPosition has a weird issue : if we get user CurrentPosition while watch is activated
@@ -119,11 +109,14 @@ geotrekMap.controller('MapController', ['$rootScope', '$state', '$scope', '$log'
     // This callback is used to reactivate watching after getLatLngPosition call, as this call desactivate
     // watch to avoid that issue
     var watchCallback = function() {
-        $rootScope.watchID = geolocationFactory.watchPosition($scope, {enableHighAccuracy: true});
+        var watchOptions = {
+            enableHighAccuracy: true
+        }
+        // TODO: this watch must depend on user watch setting
+        $rootScope.watchID = geolocationFactory.watchPosition($scope, watchOptions);
     }
 
     // Beginning geolocation watching
-    // TODO: this watch must depend on user watch setting
     watchCallback();
 
     // Center map on user position
@@ -138,7 +131,7 @@ geotrekMap.controller('MapController', ['$rootScope', '$state', '$scope', '$log'
             });
         })
         .catch(function(error) {
-            $log.warn(error);
+            logging.warn(error);
         });
     }
 
@@ -151,10 +144,25 @@ geotrekMap.controller('MapController', ['$rootScope', '$state', '$scope', '$log'
     });
 
 }])
-.controller('MapControllerDetail', ['$rootScope', '$state', '$scope', '$stateParams', '$window', 'treksFactory', 'leafletData', 'trek',
-            function ($rootScope, $state, $scope, $stateParams, $window, treksFactory, leafletData, trek) {
+.controller('MapControllerDetail', ['$rootScope', '$state', '$scope', '$stateParams', '$window', 'treksFactory', 'poisFactory','leafletService','leafletData', 'trek',
+            function ($rootScope, $state, $scope, $stateParams, $window, treksFactory, poisFactory, leafletService, leafletData, trek) {
 
     $scope.currentTrek = $stateParams.trekId;
+
+    leafletData.getMap().then(function(map) {
+        // Draw a new polyline in background to highlight the selected trek
+        L.geoJson(trek, {style:{'color': '#981d97', 'weight': 12, 'opacity': 0.8}})
+            .addTo(map)
+            .bringToBack()
+            .setText('>         ', {repeat:true, offset: 15});
+        
+        // Display POIs
+        poisFactory.getPoisFromTrek(trek.id)
+        .then(function(pois) {
+            var treksMarkers = leafletService.createMarkersFromTrek(trek, pois.features);
+            leafletService.setMarkers(treksMarkers);
+        });
+    });
 
     function fitBoundsTrek(map) {
         // Going through L.geoJson object to get trek geojson bounds
